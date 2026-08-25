@@ -126,17 +126,6 @@ type ProjectComparison = {
   after: ComparisonPeriod;
 };
 
-type SustainabilityTool = {
-  repositoryUrl: string;
-  description: string | null;
-  releaseCount: number;
-  latestVersion: string | null;
-  latestReleaseAt: string | null;
-  commitCount: number;
-  commitCountIsMinimum: boolean;
-  lastUpdatedAt: string;
-};
-
 type View = "overview" | "members" | "connections" | "activity";
 type ActivityType = "all" | "issue" | "pr" | "review";
 type ConnectionFilter = "all" | "closing" | "related" | "mentor_provided" | "no_issue" | "exceptions";
@@ -150,7 +139,6 @@ type DashboardData = {
   contributionConnections?: ContributionConnection[];
   translationCompletion?: TranslationCompletion | null;
   projectComparison?: ProjectComparison | null;
-  sustainabilityTool?: SustainabilityTool | null;
 };
 
 const initialData = metricsData as unknown as DashboardData;
@@ -349,7 +337,6 @@ export default function Dashboard() {
   const maxMonth = Math.max(...monthly.map(([, value]) => value.issue + value.pr + value.review), 1);
   const completion = data.translationCompletion;
   const comparison = data.projectComparison;
-  const sustainabilityTool = data.sustainabilityTool;
   const comparisonBefore = comparison ? summarizeComparisonRange(beforeRange.from, beforeRange.to, comparison.records || [], comparison.before) : null;
   const comparisonAfter = comparison ? summarizeComparisonRange(afterRange.from, afterRange.to, comparison.records || [], comparison.after) : null;
   const comparisonRows = comparison ? [
@@ -529,28 +516,6 @@ export default function Dashboard() {
             </article>
           </div>
           <p className="coverageNote"><b>완료 판정</b> 한국어 문서가 존재하고 마지막 한국어 갱신이 영문 원문의 최신 변경보다 늦으며, Markdown 제목 구조가 일치해 트래커에서 <code>up_to_date</code>로 분류된 문서만 포함합니다.</p>
-        </section>}
-
-        {sustainabilityTool && <section className="toolPanel" aria-label="KubeLingoAssist를 통한 장기 성과 유지 기반">
-          <div className="toolHeader">
-            <div><span className="eyebrow">장기 성과 유지 기반</span><h2>KubeLingoAssist</h2><p>번역 파일 생성과 영문·번역문 병렬 비교, PR 변경 파일 기반 리뷰 흐름을 VS Code 안에 묶어 번역·리뷰의 반복 작업을 줄이는 도구입니다.</p></div>
-            <a href={sustainabilityTool.repositoryUrl} target="_blank" rel="noreferrer">도구 저장소 ↗</a>
-          </div>
-          <div className="toolProofGrid">
-            <article><span>제공 워크플로</span><strong>2개</strong><small>번역 모드 · 리뷰 모드</small></article>
-            <article><span>공개 릴리스</span><strong>{fmt.format(sustainabilityTool.releaseCount)}회</strong><small>최신 {sustainabilityTool.latestVersion || "버전 확인 중"}</small></article>
-            <article><span>개발 커밋</span><strong>{sustainabilityTool.commitCountIsMinimum ? `${fmt.format(sustainabilityTool.commitCount)}+` : fmt.format(sustainabilityTool.commitCount)}</strong><small>기본 브랜치 기준</small></article>
-            <article><span>최근 개발 갱신</span><strong>{compactFmt.format(new Date(sustainabilityTool.lastUpdatedAt))}</strong><small>저장소 push 기준</small></article>
-          </div>
-          <div className="toolMetricFramework">
-            <div className="frameworkIntro"><h3>도구 도입 효과를 증명할 운영 KPI</h3><p>현재 저장소에는 사용 텔레메트리가 없어 아래 값은 아직 실적으로 집계하지 않습니다. PR 템플릿에 도구 사용 여부를 기록하면 GitHub 데이터만으로 장기 추적할 수 있습니다.</p></div>
-            <div className="frameworkGrid">
-              <article><b>도구 경유 PR 비율</b><span>도구 사용 PR ÷ 전체 한국어 PR</span><small>도입률</small></article>
-              <article><b>번역·리뷰 리드타임</b><span>도구 사용 여부별 PR 생성→머지 중앙값</span><small>속도</small></article>
-              <article><b>재작업 감소율</b><span>변경 요청·재리뷰 횟수의 전후 변화</span><small>품질</small></article>
-              <article><b>번역 완료 유지율</b><span>머지 30·60·90일 후 up_to_date 유지 비율</span><small>지속성</small></article>
-            </div>
-          </div>
         </section>}
 
         <section className="insightGrid">

@@ -31,8 +31,7 @@ test("성과 대시보드가 서버 렌더링된다", async () => {
   assert.match(html, /type="date"/);
   assert.match(html, /기본 비교로 초기화/);
   assert.match(html, /이슈 생성 → 머지 평균/);
-  assert.match(html, /KubeLingoAssist/);
-  assert.match(html, /도구 경유 PR 비율/);
+  assert.doesNotMatch(html, /KubeLingoAssist|도구 경유 PR 비율/);
   assert.match(html, /12\.90[\s\S]{0,30}%/);
   assert.match(html, /13\.25[\s\S]{0,30}%/);
   assert.match(html, /\+[\s\S]{0,30}0\.35[\s\S]{0,30}%p/);
@@ -43,7 +42,7 @@ test("성과 대시보드가 서버 렌더링된다", async () => {
   assert.doesNotMatch(html, /기여가 쌓여|Contribution Atlas|codex-preview|Your site is taking shape/);
 });
 
-test("동일 기간 전후 비교와 장기 운영 KPI를 수집한다", async () => {
+test("동일 기간 전후 비교를 수집하고 도구 지표는 개요에서 제외한다", async () => {
   const dashboard = await readFile(new URL("../app/Dashboard.tsx", import.meta.url), "utf8");
   const collector = await readFile(new URL("../scripts/collect-github.mjs", import.meta.url), "utf8");
   const metrics = JSON.parse(await readFile(new URL("../app/metrics.json", import.meta.url), "utf8"));
@@ -55,7 +54,7 @@ test("동일 기간 전후 비교와 장기 운영 KPI를 수집한다", async (
   assert.match(dashboard, /summarizeComparisonRange/);
   assert.match(dashboard, /setBeforeRange/);
   assert.match(dashboard, /setAfterRange/);
-  assert.match(dashboard, /번역 완료 유지율/);
+  assert.doesNotMatch(dashboard, /KubeLingoAssist|도구 경유 PR 비율|번역 완료 유지율/);
   assert.match(collector, /matched-period-korean-localization-prs/);
   assert.match(collector, /averageIssueToMergeDays/);
   assert.match(collector, /searchKoreanPullRequestsFromPage/);

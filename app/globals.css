@@ -76,10 +76,10 @@ main { min-height: 100vh; }
 .analysisStrip span { color: var(--muted); font-size: 11px; }
 .analysisStrip strong { font-size: 17px; }
 
-.comparisonPanel, .toolPanel { margin: 0 clamp(24px, 8vw, 120px) 14px; padding: 28px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); }
+.comparisonPanel { margin: 0 clamp(24px, 8vw, 120px) 14px; padding: 28px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); }
 .comparisonHeader { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
-.comparisonHeader h2, .toolHeader h2 { margin: 0; font-size: clamp(23px, 2.2vw, 31px); letter-spacing: -.04em; }
-.comparisonHeader p, .toolHeader p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.comparisonHeader h2 { margin: 0; font-size: clamp(23px, 2.2vw, 31px); letter-spacing: -.04em; }
+.comparisonHeader p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
 .comparisonRangeEditor { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 14px; margin-top: 22px; }
 .comparisonRangeEditor > i { color: #9aa5ad; font-size: 9px; font-style: normal; font-weight: 900; }
 .comparisonRangeEditor fieldset { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: end; gap: 10px; min-width: 0; margin: 0; padding: 15px 16px; border: 1px solid var(--line); border-radius: 7px; background: #fafbfc; }
@@ -130,26 +130,6 @@ main { min-height: 100vh; }
 .coverageNote { margin: 18px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
 .coverageNote b { color: var(--ink); }
 .coverageNote code { color: #44515b; font: 700 9px ui-monospace, monospace; }
-
-.toolPanel { padding: 0; overflow: hidden; }
-.toolHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 28px; padding: 28px; border-bottom: 1px solid var(--line); background: #f8fafc; }
-.toolHeader > div { max-width: 760px; }
-.toolHeader .eyebrow { display: block; margin-bottom: 8px; color: var(--blue); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
-.toolHeader > a { flex-shrink: 0; color: var(--blue); font-size: 10px; font-weight: 800; }
-.toolProofGrid { display: grid; grid-template-columns: repeat(4, 1fr); }
-.toolProofGrid article { min-height: 122px; padding: 23px; border-right: 1px solid var(--line); }
-.toolProofGrid article:last-child { border-right: 0; }
-.toolProofGrid span, .toolProofGrid small { display: block; color: var(--muted); font-size: 9px; }
-.toolProofGrid strong { display: block; margin: 12px 0 7px; color: var(--ink); font-size: 25px; letter-spacing: -.03em; }
-.toolMetricFramework { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr); gap: 26px; padding: 25px 28px 28px; border-top: 1px solid var(--line); background: #fcfcfd; }
-.frameworkIntro h3 { margin: 0 0 8px; font-size: 16px; }
-.frameworkIntro p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.65; }
-.frameworkGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.frameworkGrid article { position: relative; min-height: 76px; padding: 15px 72px 15px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); }
-.frameworkGrid b, .frameworkGrid span { display: block; }
-.frameworkGrid b { margin-bottom: 5px; font-size: 11px; }
-.frameworkGrid span { color: var(--muted); font-size: 9px; line-height: 1.45; }
-.frameworkGrid small { position: absolute; top: 14px; right: 13px; border-radius: 999px; background: #e9eef6; color: #4b6174; padding: 4px 7px; font-size: 8px; font-weight: 800; }
 
 .issueMetricCard strong { margin-bottom: 14px; }
 .issueBreakdown { display: flex; flex-wrap: wrap; gap: 5px 12px; }
@@ -306,10 +286,6 @@ main { min-height: 100vh; }
   .insightGrid { grid-template-columns: 1fr; }
   .connectionFilters { grid-template-columns: 1fr; }
   .connectionFilterButtons { overflow-x: auto; }
-  .toolProofGrid { grid-template-columns: 1fr 1fr; }
-  .toolProofGrid article:nth-child(2) { border-right: 0; }
-  .toolProofGrid article:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-  .toolMetricFramework { grid-template-columns: 1fr; }
   .comparisonRangeEditor { grid-template-columns: 1fr; }
   .comparisonRangeEditor > i { text-align: center; }
 }
@@ -330,7 +306,7 @@ main { min-height: 100vh; }
   .filterBand input { width: 100%; }
   .summary, .analysisStrip { grid-template-columns: 1fr 1fr; padding-left: 20px; padding-right: 20px; }
   .coveragePanel { margin-left: 20px; margin-right: 20px; padding: 22px 20px; }
-  .comparisonPanel, .toolPanel { margin-left: 20px; margin-right: 20px; }
+  .comparisonPanel { margin-left: 20px; margin-right: 20px; }
   .comparisonPanel { padding: 22px 20px; overflow-x: auto; }
   .comparisonHeader { min-width: 620px; align-items: flex-start; flex-direction: column; }
   .comparisonRangeEditor { min-width: 620px; grid-template-columns: 1fr; }
@@ -354,10 +330,6 @@ main { min-height: 100vh; }
   .connectionTableHead, .connectionRow { min-width: 1250px; }
   .sectionHead { align-items: flex-start; flex-direction: column; }
   .drawerStats { grid-template-columns: 1fr 1fr; gap: 20px; }
-  .toolHeader { flex-direction: column; }
-  .toolProofGrid, .frameworkGrid { grid-template-columns: 1fr; }
-  .toolProofGrid article { border-right: 0; border-bottom: 1px solid var(--line); }
-  .toolProofGrid article:last-child { border-bottom: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
