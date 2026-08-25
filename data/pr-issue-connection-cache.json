@@ -1,0 +1,329 @@
+{
+  "56629": [
+    {
+      "number": 56465,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56634": [
+    {
+      "number": 56624,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56647": [
+    {
+      "number": 56646,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56648": [
+    {
+      "number": 56646,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56657": [
+    {
+      "number": 56628,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56678": [
+    {
+      "number": 56630,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56703": [
+    {
+      "number": 55567,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56714": [
+    {
+      "number": 56633,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56721": [
+    {
+      "number": 56676,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56722": [
+    {
+      "number": 56649,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56736": [
+    {
+      "number": 39002,
+      "relationKind": "mention",
+      "keyword": "본문 언급"
+    },
+    {
+      "number": 55855,
+      "relationKind": "mention",
+      "keyword": "본문 언급"
+    },
+    {
+      "number": 56672,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56744": [
+    {
+      "number": 56718,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56748": [
+    {
+      "number": 56747,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56750": [
+    {
+      "number": 56738,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56759": [
+    {
+      "number": 56757,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56760": [
+    {
+      "number": 56743,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56776": [
+    {
+      "number": 56744,
+      "relationKind": "related",
+      "keyword": "Related"
+    },
+    {
+      "number": 56774,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56782": [
+    {
+      "number": 52792,
+      "relationKind": "related",
+      "keyword": "Part of"
+    }
+  ],
+  "56785": [
+    {
+      "number": 56752,
+      "relationKind": "closing",
+      "keyword": "Close"
+    }
+  ],
+  "56808": [
+    {
+      "number": 56779,
+      "relationKind": "closing",
+      "keyword": "Fixes"
+    }
+  ],
+  "56820": [
+    {
+      "number": 56769,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56825": [
+    {
+      "number": 56786,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56832": [
+    {
+      "number": 56831,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56843": [
+    {
+      "number": 56814,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56845": [
+    {
+      "number": 56775,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56878": [
+    {
+      "number": 56781,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56880": [
+    {
+      "number": 56830,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56884": [
+    {
+      "number": 56883,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56886": [
+    {
+      "number": 56885,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56887": [
+    {
+      "number": 56783,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56889": [
+    {
+      "number": 56821,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56960": [
+    {
+      "number": 56888,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56962": [],
+  "56984": [
+    {
+      "number": 57067,
+      "relationKind": "mention",
+      "keyword": "본문 언급"
+    },
+    {
+      "number": 56897,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "56999": [
+    {
+      "number": 56995,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57010": [
+    {
+      "number": 56909,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57014": [
+    {
+      "number": 57003,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57015": [
+    {
+      "number": 56983,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57021": [
+    {
+      "number": 57004,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57024": [
+    {
+      "number": 57022,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57041": [
+    {
+      "number": 56866,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57067": [
+    {
+      "number": 56984,
+      "relationKind": "mention",
+      "keyword": "본문 언급"
+    },
+    {
+      "number": 56897,
+      "relationKind": "related",
+      "keyword": "Related to"
+    }
+  ],
+  "57098": [
+    {
+      "number": 57042,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ],
+  "57131": [
+    {
+      "number": 57039,
+      "relationKind": "closing",
+      "keyword": "Closes"
+    }
+  ]
+}

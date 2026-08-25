@@ -1,0 +1,18 @@
+{
+  "55567": {
+    "number": 55567,
+    "title": "[ko] Translate content/en/docs/concepts/scheduling-eviction/podgroup-scheduling.md into Korean",
+    "url": "https://github.com/kubernetes/website/issues/55567",
+    "author": "Eundms",
+    "createdAt": "2026-04-27T11:38:38Z",
+    "updatedAt": "2026-08-17T09:48:23Z",
+    "closedAt": "2026-08-17T09:48:23Z",
+    "mergedAt": null,
+    "state": "closed",
+    "comments": 3,
+    "labels": [
+      "language/ko"
+    ],
+    "isKorean": true
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "56465": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56629,
+      "title": "[ko] Translate content/en/docs/reference/glossary/security-context.md",
+      "url": "https://github.com/kubernetes/website/pull/56629",
+      "author": "S0okJu",
+      "mergedAt": "2026-08-17T02:22:15Z"
+    }
+  },
+  "56628": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56657,
+      "title": "[ko] Update Cluster Networking",
+      "url": "https://github.com/kubernetes/website/pull/56657",
+      "author": "neronsoda",
+      "mergedAt": "2026-08-04T15:14:30Z"
+    }
+  },
+  "56631": {
+    "resolution": "closed_without_merged_pr",
+    "closingPullRequest": null
+  },
+  "56633": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56714,
+      "title": "[ko] Update content/ko/docs/concepts/services-networking/service.md",
+      "url": "https://github.com/kubernetes/website/pull/56714",
+      "author": "llokr1",
+      "mergedAt": "2026-08-17T05:20:17Z"
+    }
+  },
+  "56646": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56648,
+      "title": "[ko] Update Options for Highly Available Topology",
+      "url": "https://github.com/kubernetes/website/pull/56648",
+      "author": "BcKmini",
+      "mergedAt": "2026-08-18T17:43:09Z"
+    }
+  },
+  "56649": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56722,
+      "title": "[ko] Update Korean localization for services networking",
+      "url": "https://github.com/kubernetes/website/pull/56722",
+      "author": "SuperSon7",
+      "mergedAt": "2026-08-18T17:53:11Z"
+    }
+  },
+  "56676": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56721,
+      "title": "[ko] Update Korean network plugins documentation",
+      "url": "https://github.com/kubernetes/website/pull/56721",
+      "author": "WAFriend3416",
+      "mergedAt": "2026-08-19T18:23:09Z"
+    }
+  },
+  "56738": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56750,
+      "title": "[ko] Update content/ko/docs/concepts/security/service-accounts.md",
+      "url": "https://github.com/kubernetes/website/pull/56750",
+      "author": "dongjune8931",
+      "mergedAt": "2026-08-08T07:41:58Z"
+    }
+  },
+  "56814": {
+    "resolution": "resolved_by_merged_pr",
+    "closingPullRequest": {
+      "number": 56843,
+      "title": "[ko] Fix broken anchor and outdated link in content/ko/docs/concepts/extend-kubernetes/compute-storage-net/_index.md",
+      "url": "https://github.com/kubernetes/website/pull/56843",
+      "author": "ytjdud",
+      "mergedAt": "2026-08-09T04:59:59Z"
+    }
+  }
+}
