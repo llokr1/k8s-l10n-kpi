@@ -21,6 +21,15 @@ const TRANSLATION_COMPLETION_START = {
   completedDocuments: 216,
   completionPercent: 12.9,
   statusCounts: { up_to_date: 216, outdated: 304, possibly_outdated: 5, not_translated: 1150 },
+  categories: {
+    concepts: { totalDocuments: 176, completedDocuments: 29, completionPercent: 16.48, statusCounts: { up_to_date: 29, outdated: 107, possibly_outdated: 1, not_translated: 39 } },
+    contribute: { totalDocuments: 43, completedDocuments: 12, completionPercent: 27.91, statusCounts: { up_to_date: 12, outdated: 13, possibly_outdated: 0, not_translated: 18 } },
+    home: { totalDocuments: 2, completedDocuments: 1, completionPercent: 50, statusCounts: { up_to_date: 1, outdated: 1, possibly_outdated: 0, not_translated: 0 } },
+    reference: { totalDocuments: 1163, completedDocuments: 123, completionPercent: 10.58, statusCounts: { up_to_date: 123, outdated: 33, possibly_outdated: 0, not_translated: 1007 } },
+    setup: { totalDocuments: 22, completedDocuments: 8, completionPercent: 36.36, statusCounts: { up_to_date: 8, outdated: 10, possibly_outdated: 0, not_translated: 4 } },
+    tasks: { totalDocuments: 220, completedDocuments: 24, completionPercent: 10.91, statusCounts: { up_to_date: 24, outdated: 129, possibly_outdated: 2, not_translated: 65 } },
+    tutorials: { totalDocuments: 49, completedDocuments: 19, completionPercent: 38.78, statusCounts: { up_to_date: 19, outdated: 10, possibly_outdated: 1, not_translated: 19 } },
+  },
 };
 const API_VERSION = "2022-11-28";
 const REUSE_EXISTING_ACTIVITY = process.env.REUSE_EXISTING_ACTIVITY === "1";
@@ -355,12 +364,29 @@ async function fetchTranslationCompletion() {
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   }
   const completedDocuments = statusCounts.up_to_date;
+  const categories = Object.fromEntries(matrices.map((matrix, index) => {
+    const category = I18N_TRACKER_DOC_CATEGORIES[index].replace(/^docs_/, "");
+    const categoryArticles = matrix.articles || [];
+    const categoryStatusCounts = { up_to_date: 0, outdated: 0, possibly_outdated: 0, not_translated: 0 };
+    for (const article of categoryArticles) {
+      const status = article.translations?.ko?.status || "not_translated";
+      categoryStatusCounts[status] = (categoryStatusCounts[status] || 0) + 1;
+    }
+    const categoryCompletedDocuments = categoryStatusCounts.up_to_date;
+    return [category, {
+      totalDocuments: categoryArticles.length,
+      completedDocuments: categoryCompletedDocuments,
+      completionPercent: categoryArticles.length ? Number((categoryCompletedDocuments / categoryArticles.length * 100).toFixed(2)) : 0,
+      statusCounts: categoryStatusCounts,
+    }];
+  }));
   const current = {
     asOf: matrices.map((matrix) => matrix.lastUpdated).filter(Boolean).sort().at(-1) || new Date().toISOString(),
     totalDocuments: articles.length,
     completedDocuments,
     completionPercent: articles.length ? Number((completedDocuments / articles.length * 100).toFixed(2)) : 0,
     statusCounts,
+    categories,
   };
   return {
     methodology: "kubernetes-i18n-tracker-up-to-date",

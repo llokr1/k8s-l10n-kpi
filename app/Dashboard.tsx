@@ -80,6 +80,14 @@ type TranslationCompletionSnapshot = {
   completedDocuments: number;
   completionPercent: number;
   statusCounts: Record<string, number>;
+  categories?: Record<string, TranslationCategorySnapshot>;
+};
+
+type TranslationCategorySnapshot = {
+  totalDocuments: number;
+  completedDocuments: number;
+  completionPercent: number;
+  statusCounts: Record<string, number>;
 };
 
 type TranslationCompletion = {
@@ -142,6 +150,16 @@ type DashboardData = {
 };
 
 const initialData = metricsData as unknown as DashboardData;
+
+const translationCategoryOrder = [
+  { key: "concepts", label: "Concept" },
+  { key: "tasks", label: "Task" },
+  { key: "tutorials", label: "Tutorial" },
+  { key: "setup", label: "Setup" },
+  { key: "reference", label: "Reference" },
+  { key: "contribute", label: "Contribute" },
+  { key: "home", label: "Home" },
+] as const;
 
 const fmt = new Intl.NumberFormat("ko-KR");
 const dateFmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "short", day: "numeric" });
@@ -515,6 +533,31 @@ export default function Dashboard() {
               <i className="coverageTrack"><b style={{ width: `${completion.current.completionPercent}%` }} /></i>
             </article>
           </div>
+          {completion.current.categories && <div className="coverageCategoryBreakdown">
+            <div className="coverageCategoryHead">
+              <h3>문서 유형별 완료율</h3>
+              <span>최근 완료율 · 활동 시작 직전 대비 변화</span>
+            </div>
+            <div className="coverageCategoryGrid">
+              {translationCategoryOrder.map(({ key, label }) => {
+                const currentCategory = completion.current.categories?.[key];
+                const startCategory = completion.start.categories?.[key];
+                if (!currentCategory) return null;
+                const change = startCategory ? Number((currentCategory.completionPercent - startCategory.completionPercent).toFixed(2)) : null;
+                return <article className="coverageCategoryCard" key={key}>
+                  <div><span>{label}</span><strong>{currentCategory.completionPercent.toFixed(2)}%</strong></div>
+                  <small>{fmt.format(currentCategory.completedDocuments)} / {fmt.format(currentCategory.totalDocuments)}개 문서</small>
+                  <i className="coverageCategoryTrack">
+                    <b style={{ width: `${currentCategory.completionPercent}%` }} />
+                    {startCategory && <em style={{ left: `${startCategory.completionPercent}%` }} />}
+                  </i>
+                  <p>
+                    {startCategory ? <>활동 전 {startCategory.completionPercent.toFixed(2)}% <b className={change && change > 0 ? "up" : change && change < 0 ? "down" : "flat"}>{change && change > 0 ? "+" : ""}{change?.toFixed(2)}%p</b></> : "활동 전 데이터 없음"}
+                  </p>
+                </article>;
+              })}
+            </div>
+          </div>}
           <p className="coverageNote"><b>완료 판정</b> 한국어 문서가 존재하고 마지막 한국어 갱신이 영문 원문의 최신 변경보다 늦으며, Markdown 제목 구조가 일치해 트래커에서 <code>up_to_date</code>로 분류된 문서만 포함합니다.</p>
         </section>}
 

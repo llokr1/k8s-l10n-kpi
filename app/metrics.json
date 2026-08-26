@@ -6610,6 +6610,15 @@
         "outdated": 304,
         "possibly_outdated": 5,
         "not_translated": 1150
+      },
+      "categories": {
+        "concepts": { "totalDocuments": 176, "completedDocuments": 29, "completionPercent": 16.48, "statusCounts": { "up_to_date": 29, "outdated": 107, "possibly_outdated": 1, "not_translated": 39 } },
+        "contribute": { "totalDocuments": 43, "completedDocuments": 12, "completionPercent": 27.91, "statusCounts": { "up_to_date": 12, "outdated": 13, "possibly_outdated": 0, "not_translated": 18 } },
+        "home": { "totalDocuments": 2, "completedDocuments": 1, "completionPercent": 50, "statusCounts": { "up_to_date": 1, "outdated": 1, "possibly_outdated": 0, "not_translated": 0 } },
+        "reference": { "totalDocuments": 1163, "completedDocuments": 123, "completionPercent": 10.58, "statusCounts": { "up_to_date": 123, "outdated": 33, "possibly_outdated": 0, "not_translated": 1007 } },
+        "setup": { "totalDocuments": 22, "completedDocuments": 8, "completionPercent": 36.36, "statusCounts": { "up_to_date": 8, "outdated": 10, "possibly_outdated": 0, "not_translated": 4 } },
+        "tasks": { "totalDocuments": 220, "completedDocuments": 24, "completionPercent": 10.91, "statusCounts": { "up_to_date": 24, "outdated": 129, "possibly_outdated": 2, "not_translated": 65 } },
+        "tutorials": { "totalDocuments": 49, "completedDocuments": 19, "completionPercent": 38.78, "statusCounts": { "up_to_date": 19, "outdated": 10, "possibly_outdated": 1, "not_translated": 19 } }
       }
     },
     "current": {
@@ -6622,6 +6631,15 @@
         "outdated": 300,
         "possibly_outdated": 6,
         "not_translated": 1147
+      },
+      "categories": {
+        "concepts": { "totalDocuments": 176, "completedDocuments": 37, "completionPercent": 21.02, "statusCounts": { "up_to_date": 37, "outdated": 99, "possibly_outdated": 3, "not_translated": 37 } },
+        "contribute": { "totalDocuments": 43, "completedDocuments": 13, "completionPercent": 30.23, "statusCounts": { "up_to_date": 13, "outdated": 13, "possibly_outdated": 0, "not_translated": 17 } },
+        "home": { "totalDocuments": 2, "completedDocuments": 2, "completionPercent": 100, "statusCounts": { "up_to_date": 2, "outdated": 0, "possibly_outdated": 0, "not_translated": 0 } },
+        "reference": { "totalDocuments": 1163, "completedDocuments": 124, "completionPercent": 10.66, "statusCounts": { "up_to_date": 124, "outdated": 32, "possibly_outdated": 1, "not_translated": 1006 } },
+        "setup": { "totalDocuments": 22, "completedDocuments": 9, "completionPercent": 40.91, "statusCounts": { "up_to_date": 9, "outdated": 9, "possibly_outdated": 0, "not_translated": 4 } },
+        "tasks": { "totalDocuments": 220, "completedDocuments": 23, "completionPercent": 10.45, "statusCounts": { "up_to_date": 23, "outdated": 131, "possibly_outdated": 2, "not_translated": 64 } },
+        "tutorials": { "totalDocuments": 49, "completedDocuments": 14, "completionPercent": 28.57, "statusCounts": { "up_to_date": 14, "outdated": 16, "possibly_outdated": 0, "not_translated": 19 } }
       }
     },
     "changePercentagePoints": 0.35,

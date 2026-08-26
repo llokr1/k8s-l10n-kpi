@@ -70,6 +70,12 @@ test("활동 시작 전후 번역 완료율을 i18n Tracker 기준으로 수집�
   assert.match(collector, /up_to_date/);
   assert.match(collector, /docs_concepts/);
   assert.match(collector, /changePercentagePoints/);
+  assert.match(collector, /categories/);
+  assert.match(dashboard, /문서 유형별 완료율/);
+  assert.match(dashboard, /Concept/);
+  assert.match(dashboard, /Task/);
+  assert.match(dashboard, /Setup/);
+  assert.match(dashboard, /Reference/);
 });
 
 test("이슈 종료를 머지 PR 해결과 일반 종료로 분리한다", async () => {
