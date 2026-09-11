@@ -1,0 +1,23 @@
+name: Refresh PR management from private JSON
+description: Read private assignments in memory and publish only reviewer IDs and exclusion flags with public GitHub data
+inputs:
+  assignments-repository:
+    description: Private repository in owner/name format
+    required: false
+    default: ""
+  assignments-token:
+    description: Fine-grained token with Contents read access to the private repository only
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Restore previously tracked PRs
+      shell: bash
+      run: node scripts/restore-pr-snapshots.mjs
+    - name: Collect PRs and public assignment projection
+      shell: bash
+      env:
+        PR_ASSIGNMENTS_REPOSITORY: ${{ inputs.assignments-repository }}
+        PR_ASSIGNMENTS_TOKEN: ${{ inputs.assignments-token }}
+      run: npm run collect:prs

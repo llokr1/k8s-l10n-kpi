@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -40,6 +40,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTIVITY_START: "2026-07-11"
+      - uses: ./.github/actions/private-pr-management
+        with:
+          assignments-repository: ${{ vars.PR_ASSIGNMENTS_REPOSITORY }}
+          assignments-token: ${{ secrets.PR_ASSIGNMENTS_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITE_URL: ${{ steps.pages.outputs.base_url }}/
       - name: Build
         run: npm run build
         env:

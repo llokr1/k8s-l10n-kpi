@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "repository": "kubernetes/website",
+  "trackingStart": "2026-09-11T00:00:00+09:00",
+  "includeOpenBacklog": false,
+  "generatedAt": "2026-09-11T01:34:01.166Z",
+  "lastSuccessfulAt": "2026-09-11T01:34:01.166Z",
+  "discoveryComplete": true,
+  "errors": [],
+  "pullRequests": []
+}

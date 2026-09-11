@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import metricsData from "./metrics.json";
+import PrManagement from "./PrManagement";
 
 type Activity = {
   number: number;
@@ -134,7 +135,7 @@ type ProjectComparison = {
   after: ComparisonPeriod;
 };
 
-type View = "overview" | "members" | "connections" | "activity";
+type View = "overview" | "members" | "connections" | "activity" | "management";
 type ActivityType = "all" | "issue" | "pr" | "review";
 type ConnectionFilter = "all" | "closing" | "related" | "mentor_provided" | "no_issue" | "exceptions";
 
@@ -413,14 +414,15 @@ export default function Dashboard() {
           <span><b>OSSCA 기여 현황</b><small>kubernetes/website</small></span>
         </button>
         <nav aria-label="주요 메뉴">
-          {(["overview", "members", "connections", "activity"] as View[]).map((item) => <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>{item === "overview" ? "성과 개요" : item === "members" ? "멤버별 기여" : item === "connections" ? "통합 기여 현황" : "활동 내역"}</button>)}
+          {(["overview", "members", "connections", "activity", "management"] as View[]).map((item) => <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>{item === "overview" ? "성과 개요" : item === "members" ? "멤버별 기여" : item === "connections" ? "통합 기여 현황" : item === "management" ? "PR 관리" : "활동 내역"}</button>)}
         </nav>
-        <div className="headerActions">
+        <div className="headerActions" style={view === "management" ? { visibility: "hidden" } : undefined}>
           <button className="refreshButton" onClick={refreshData} disabled={refreshing} title="최근 배포된 수집 데이터를 다시 불러옵니다">{refreshing ? "불러오는 중…" : "↻ 최신 데이터"}</button>
           <button className="exportButton" onClick={exportCsv}>CSV 내보내기 ↓</button>
         </div>
       </header>
 
+      {view === "management" ? <PrManagement members={data.members} /> : <>
       <section className="dashboardHeader" id="top">
         <div>
           <h1>Kubernetes 한국어 문서 기여 현황</h1>
@@ -639,6 +641,7 @@ export default function Dashboard() {
         ...selectedMember.pullRequests.map((item) => ({ ...item, kind: "PR" })),
         ...selectedMember.reviewedPullRequests.map((item) => ({ ...item, kind: "리뷰", createdAt: item.reviewedAt || item.updatedAt })),
       ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20).map((item, index) => <a href={item.url} target="_blank" rel="noreferrer" key={`${item.kind}-${item.number}-${index}`}><span>{item.kind}</span><div><b>#{item.number} {item.title}</b><small>{dateFmt.format(new Date(item.createdAt))} · {item.kind === "이슈" ? issueResolutionLabel(item) : stateLabel(item.state)}</small></div></a>)}</div></aside></div>}
+      </>}
     </main>
   );
 }
