@@ -51,6 +51,7 @@ jobs:
         run: npm run build
         env:
           SITE_URL: ${{ steps.pages.outputs.base_url }}/
+          VITE_REVIEW_API_URL: ${{ vars.REVIEW_API_URL }}
       - name: Export static Pages site
         run: npm run export:pages
         env:

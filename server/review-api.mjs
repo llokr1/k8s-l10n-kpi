@@ -5,7 +5,12 @@ import { createReviewStore, StoreError } from "./review-store.mjs";
 import { updateAssignment, editableAssignment } from "../lib/review-editor.mjs";
 
 const port=Number(process.env.REVIEW_API_PORT || 3101);
-const origins=new Set((process.env.REVIEW_ALLOWED_ORIGINS || "http://localhost:3000,http://127.0.0.1:3000").split(","));
+const list=(value)=>String(value||"").split(",").map(x=>x.trim().replace(/\/$/,"")).filter(Boolean);
+const origins=new Set(list(process.env.REVIEW_ALLOWED_ORIGINS || "http://localhost:3000,http://127.0.0.1:3000"));
+const hosts=new Set(list(process.env.REVIEW_ALLOWED_HOSTS || "localhost,127.0.0.1"));
+const publicSnapshotUrl=process.env.REVIEW_PUBLIC_SNAPSHOT_URL || "https://llokr1.github.io/k8s-l10n-kpi/data/pr-management.json";
+let parsedSnapshotUrl;try{parsedSnapshotUrl=new URL(publicSnapshotUrl);}catch{throw new Error("REVIEW_PUBLIC_SNAPSHOT_URL 형식 오류");}
+if(!["https:","http:"].includes(parsedSnapshotUrl.protocol)) throw new Error("REVIEW_PUBLIC_SNAPSHOT_URL은 HTTP(S) 주소여야 합니다.");
 const gitDirectory=process.env.REVIEW_GIT_DIRECTORY;
 const store=createReviewStore({repository:process.env.PR_ASSIGNMENTS_REPOSITORY,token:process.env.PR_ASSIGNMENTS_WRITE_TOKEN,gitDirectory,file:resolve(gitDirectory ? gitDirectory+"/review-assignments.json" : process.env.REVIEW_PRIVATE_FILE || "private-data/review-assignments.json")});
 let queue=Promise.resolve();
@@ -13,7 +18,7 @@ let publicSnapshot=null, publicReadAt=0;
 async function readPublicSnapshot(){
   if(publicSnapshot && Date.now()-publicReadAt<300000) return publicSnapshot;
   try{
-    const response=await fetch("https://llokr1.github.io/k8s-l10n-kpi/data/pr-management.json",{signal:AbortSignal.timeout(10000)});
+    const response=await fetch(parsedSnapshotUrl,{signal:AbortSignal.timeout(10000)});
     if(!response.ok) throw new Error();
     const value=await response.json();
     if(value.repository!=="kubernetes/website" || !Array.isArray(value.pullRequests)) throw new Error();
@@ -29,7 +34,8 @@ async function handle(req,res){
   const send=(status,value)=>{res.writeHead(status,headers);res.end(JSON.stringify(value));};
   if(origin && !origins.has(origin)) return send(403,{error:"허용되지 않은 요청 출처"});
   // Loopback binding + Host checks prevent DNS rebinding. Internal deployment uses a protected reverse proxy.
-  if(!["localhost","127.0.0.1"].includes((req.headers.host||"").split(":")[0])) return send(403,{error:"허용되지 않은 Host"});
+  let hostname="";try{hostname=new URL("http://"+(req.headers.host||"")).hostname.toLowerCase();}catch{}
+  if(!hosts.has(hostname)) return send(403,{error:"허용되지 않은 Host"});
   if(origin){headers["Access-Control-Allow-Origin"]=origin;headers["Access-Control-Allow-Headers"]="Content-Type";headers["Access-Control-Allow-Methods"]="GET,PATCH,OPTIONS";}
   if(req.method==="OPTIONS") return send(204,null);
   try{

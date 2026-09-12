@@ -36,6 +36,7 @@ jobs:
       - run: npm run build && npm run export:pages
         env:
           SITE_URL: ${{ steps.pages.outputs.base_url }}/
+          VITE_REVIEW_API_URL: ${{ vars.REVIEW_API_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: github-pages

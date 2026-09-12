@@ -19,13 +19,25 @@ REVIEW_GIT_DIRECTORY=/path/to/private-review-repository npm run review:server
 다른 PR이 동시에 수정돼도 파일 revision이 다르면 덮어쓰지 않습니다.
 로컬 변경 백업은 저장소의 .git/review-history 안에 남습니다.
 
-## 내부 서버로 운영
+## 집 PC와 GitHub Pages 연결
 
-사이트와 저장 서버를 접근이 제한된 내부망에 배치하고, 같은 주소의 /api/reviews를 이 저장 서버로 프록시합니다.
-프록시 upstream Host는 127.0.0.1:3101로 전달하고 `REVIEW_ALLOWED_ORIGINS`에 실제 내부 사이트 origin을 설정합니다.
-사용자별 로그인은 구현하지 않았습니다. 따라서 내부망/VPN 제한이 서버 접근 경계입니다.
-CORS만으로 인터넷 공개 API를 보호할 수는 없습니다. 이 서버를 익명 인터넷 쓰기 API로 노출하지 마세요.
-일반 공개 GitHub Pages에는 이 서버가 포함되지 않습니다. 현재 Pages에서는 공개 항목 조회만 유지됩니다.
+집 PC에서는 편집 서버를 127.0.0.1:3101로 실행하고 Caddy가 공개 HTTPS 주소를 3101로 전달합니다.
+공유기는 외부 TCP 443을 집 PC의 TCP 443으로 포트포워딩합니다. GitHub Pages가 HTTPS이므로 API도 HTTPS여야 하며, 공인 IP가 바뀌면 DDNS 도메인을 사용합니다.
+
+`deploy/review-api.env.example`을 비공개 환경 파일로 복사하고 다음 값을 실제 환경에 맞게 변경합니다.
+
+- `REVIEW_ALLOWED_ORIGINS`: GitHub Pages의 origin. 현재 프로젝트 경로를 제외한 `https://llokr1.github.io`
+- `REVIEW_ALLOWED_HOSTS`: Caddy에서 사용할 공개 API 호스트명
+- `REVIEW_PUBLIC_SNAPSHOT_URL`: 배포된 `data/pr-management.json`의 전체 주소
+- `REVIEW_GIT_DIRECTORY`: 집 PC에 clone한 Private 저장소의 절대경로
+
+Private 저장소 clone은 main 브랜치와 깨끗한 작업 트리를 유지해야 합니다. 편집 서버를 실행하는 OS 계정에서 `git fetch`, `git commit`, `git push`가 비대화식으로 성공하도록 Git 인증과 사용자 이름·이메일을 설정합니다.
+
+`deploy/Caddyfile.example`의 호스트명을 실제 DDNS/도메인으로 바꾸고 Caddy를 실행합니다. 공유기와 PC 방화벽에서는 443만 열고 3101은 외부에 직접 노출하지 않습니다. ISP가 CGNAT를 사용하면 일반 포트포워딩으로는 외부 접속이 되지 않습니다.
+
+사이트 저장소의 **Settings → Secrets and variables → Actions → Variables**에 `REVIEW_API_URL`을 만들고 값을 `https://공개-API-호스트/api/reviews`로 설정합니다. 이후 Pages 워크플로를 다시 실행하면 이 주소가 정적 사이트에 반영됩니다. API 주소는 비밀값이 아니므로 Actions Secret이 아니라 Variable을 사용합니다.
+
+이 구성에는 사용자별 로그인이나 공유 비밀번호가 없습니다. URL을 아는 외부인이 요청을 만들 수 있으므로 링크 유출은 곧 편집 권한 유출로 봐야 합니다. CORS와 Host 검사는 브라우저 오동작을 줄이는 장치이지 인증 수단은 아닙니다.
 
 서버에 Git 체크아웃 대신 토큰을 둘 수도 있습니다. 이 경우 REVIEW_GIT_DIRECTORY를 비우고
 PR_ASSIGNMENTS_REPOSITORY와 PR_ASSIGNMENTS_WRITE_TOKEN을 서버 환경에만 설정합니다.

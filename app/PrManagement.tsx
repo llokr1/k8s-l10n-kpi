@@ -23,6 +23,7 @@ type Data = {
 const emptyManual: Manual = { reviewers: [], excluded: false };
 const labels: Record<string, string> = { all: "전체", unassigned: "미배정", reviewing: "리뷰 중", approver: "Approver 점검", approved: "승인됨", draft: "Draft", merged: "Merged", closed: "Closed", excluded: "번역 PR X", unknown: "확인 필요" };
 const date = (value?: string | null, withTime = false) => value && !Number.isNaN(new Date(value).getTime()) ? new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "short", ...(withTime ? { timeStyle: "short" as const } : {}) }).format(new Date(value)) : "—";
+const configuredReviewApiUrl = String(import.meta.env.VITE_REVIEW_API_URL || "").trim().replace(/\/+$/, "");
 
 export default function PrManagement({ members }: { members: { name: string; githubId: string }[] }) {
   const [data, setData] = useState<Data>(snapshot as Data);
@@ -42,8 +43,9 @@ export default function PrManagement({ members }: { members: { name: string; git
   const assignments = useMemo(() => internal?.assignments || data.assignments || {}, [internal, data.assignments]);
   const prs = internal?.pullRequests || data.pullRequests;
   const apiUrl = () => {
+    if (configuredReviewApiUrl) return configuredReviewApiUrl;
     if (["localhost", "127.0.0.1"].includes(window.location.hostname)) return "http://127.0.0.1:3101/api/reviews";
-    return "./api/reviews";
+    throw new Error("내부 편집 서버 URL이 설정되지 않았습니다.");
   };
   async function refreshInternal() {
     const response = await fetch(apiUrl(), { cache: "no-store" });
@@ -138,7 +140,7 @@ export default function PrManagement({ members }: { members: { name: string; git
 
   return <section className="prManagement">
     <header className="prHeading"><div><h1>한국어 번역 PR 관리</h1><p>kubernetes/website · {date(data.trackingStart)} 이후{internal ? " · 기존 시트 이력 포함" : data.includeOpenBacklog ? " · 기존 Open 후보 포함" : " 생성된 PR"} · 종료 후에도 기록 유지</p></div><div className="prSync"><span>최근 수집 <b>{date(internal?.githubCollectedAt || data.generatedAt, true)}</b></span><button onClick={refresh} disabled={busy}>{busy ? "불러오는 중…" : "↻ 최신 데이터"}</button><label><input type="checkbox" checked={autoRefresh} onChange={(event) => setAutoRefresh(event.target.checked)} />5분마다 불러오기</label></div></header>
-    <div className="prNotice">{internal ? <>내부 편집 연결됨 · 시트 이관 {date(internal.importedAt, true)} · {internal.mode === "local" ? "로컬 파일 저장" : "Private 저장소 커밋 저장"}</> : <>내부 편집 연결 대기 <button onClick={() => refreshInternal().catch(cause => setError(cause.message))}>편집 서버 연결</button></>}</div>
+    {!internal && <div className="prNotice">내부 편집 연결 대기 <button onClick={() => refreshInternal().catch(cause => setError(cause.message))}>편집 서버 연결</button></div>}
     {!data.discoveryComplete && <p className="prNotice">아직 전체 수집이 완료되지 않았습니다. 아래 목록과 집계는 전체 PR 현황으로 볼 수 없습니다.</p>}
     {data.errors.length > 0 && <details className="prNotice"><summary>수집 오류 {data.errors.length}건 · 마지막 정상 데이터 유지</summary>{data.errors.map((item, index) => <p key={index}>{item}</p>)}</details>}
     {message && <p className="prFeedback" role="status">{message}</p>}
@@ -154,15 +156,16 @@ export default function PrManagement({ members }: { members: { name: string; git
           const state = stateOf(pr, manual);
           const reviews = completedReviews(pr, manual) as Evidence[];
           const completed = new Set(reviews.map((review) => loginKey(review.login)));
+          const lgtmCount = pr.checkedAt ? pr.lgtm.length : Number(String(pr.sheetLgtm || "").match(/\d+/)?.[0] || 0);
           return <tr key={pr.number} className={state === "excluded" ? "prExcluded" : ""}>
             <td><a className="prNumber" href={pr.url} target="_blank" rel="noreferrer" title={pr.title}>#{pr.number}</a>{pr.translation === "not-translation" && <small className="prWarning">제외 검토</small>}{pr.syncError && <small className="prWarning">갱신 실패</small>}</td>
             <td>{person(pr.author)}</td>
-            <td>{pr.issues.length ? pr.issues.map((issue) => <a className="prIssue" key={issue.repository + "#" + issue.number} href={issue.url} target="_blank" rel="noreferrer" title={issue.title}>#{issue.number}<small>{issue.kind === "closing" ? "해결할 이슈" : "관련"}</small></a>) : "—"}</td>
+            <td>{pr.issues.length ? pr.issues.map((issue) => <a className="prIssue" key={issue.repository + "#" + issue.number} href={issue.url} target="_blank" rel="noreferrer" title={issue.title}>#{issue.number}</a>) : "—"}</td>
             <td>{pr.issues.length ? pr.issues.map((issue) => <small key={issue.repository + "#" + issue.number}>{date(issue.createdAt)}</small>) : "—"}</td><td>{date(pr.createdAt)}</td><td>{pr.size?.replace("size/", "") || "—"}</td>
             <td><span className={"prState " + pr.state}>{pr.draft ? "Draft" : pr.state === "merged" ? "Merged" : pr.state === "closed" ? "Closed" : pr.state === "open" ? "Open" : "확인 중"}</span>{pr.labels.includes("do-not-merge/hold") && <small>hold</small>}</td>
             <td>{internal ? <ReviewerDropdown label={`#${pr.number} Reviewer`} members={roster} value={assignedReviewers(pr, manual)} author={pr.author} revision={internal.revision} onApply={(chosen, revision) => saveSelection(pr, "reviewers", chosen, revision)}>{assignedReviewers(pr, manual).length ? assignedReviewers(pr, manual).map(login => <span className={"prPerson " + team(login)} key={login}>{roster.find(x => x.login === login)?.name || login}{completed.has(login) ? " ✓" : ""}</span>) : "미배정"}</ReviewerDropdown> : connected ? assignedReviewers(pr, manual).map(login => <div key={login}>{person(login)}</div>) : "연결 대기"}</td>
             <td>{internal ? <ReviewerDropdown label={`#${pr.number} Review 완료`} members={roster} value={reviews.map(review => loginKey(review.login))} author={pr.author} revision={internal.revision} onApply={(chosen, revision) => saveSelection(pr, "completed", chosen, revision)}>{reviews.length ? reviews.map(review => <span className={"prPerson " + team(review.login)} key={review.login} title={review.state === "MANUAL" ? "운영자 확인" : "GitHub 리뷰"}>{roster.find(x => x.login === loginKey(review.login))?.name || review.login}</span>) : "—"}</ReviewerDropdown> : reviews.map(review => <div key={review.login}>{person(review.login, review.url)}</div>)}{pr.reviews.filter(review => review.state === "CHANGES_REQUESTED").map(review => <small key={review.login} className="prWarning">@{review.login} 수정 요청</small>)}</td>
-            <td>{pr.checkedAt ? pr.lgtm.length : pr.sheetLgtm || "—"}<small>{pr.checkedAt ? pr.labels.includes("lgtm") ? "라벨 있음" : "라벨 없음" : "시트 기록"}</small></td>
+            <td>{lgtmCount}</td>
             <td>{manual.approver && person(manual.approver)}{pr.sheetApprover && !manual.approver && <small>{pr.sheetApprover}</small>}{pr.approve.map((entry) => <div key={entry.login}>{person(entry.login, entry.url)}<small>/approve</small></div>)}{pr.labels.includes("approved") && <small>approved</small>}{state === "approver" && <b className="prWarning">점검 필요</b>}</td>
             <td>{!connected && state === "unknown" && pr.checkedAt && !pr.syncError ? "배정 연결 대기" : labels[state]}</td>
             <td>{internal ? <input className="prDeadlineInput" type="date" aria-label={`#${pr.number} 리뷰 기한`} value={manual.deadline || ""} onChange={event => void saveDeadline(pr, event.target.value)} /> : manual.deadline || "—"}</td>

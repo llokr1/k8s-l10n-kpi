@@ -1,0 +1,5 @@
+# Point this hostname to the home public IP (DDNS is fine), then forward
+# external TCP 443 on the router to TCP 443 on this PC.
+review-api.example.com {
+  reverse_proxy 127.0.0.1:3101
+}

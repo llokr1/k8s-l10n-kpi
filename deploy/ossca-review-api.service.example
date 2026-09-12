@@ -1,0 +1,21 @@
+[Unit]
+Description=OSSCA PR review editing API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ossca-review
+Group=ossca-review
+WorkingDirectory=/opt/k8s-l10n-kpi
+EnvironmentFile=/etc/ossca-review-api.env
+ExecStart=/usr/bin/npm run review:server
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
