@@ -53,6 +53,11 @@
 .prState.closed { color: #a43f45; background: #fbecef; }
 .prGrid .prWarning, .prWarning { color: #a25a0a; }
 .prExcluded td { opacity: .65; }
+.prGrid tr.prMerged > td { opacity: .42; background: #f6f7f8; }
+.prGrid tr.prMerged:hover > td { background: #f6f7f8; }
+.prGrid tr.prMerged > td:first-child { background: #f6f7f8; }
+.prGrid tr.prMerged > td.prMergedStatus { opacity: 1; text-align: center; vertical-align: middle; background: #f6f7f8; }
+.prMergedStamp { display: inline-block; padding: 5px 10px; border: 1px solid #c7bce0; border-radius: 999px; color: #6d52a3; background: #fff; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .prGrid td.prEmpty { padding: 70px 24px; text-align: center; color: #697888; }
 .prLoadGrid { min-width: 880px; }
 .prLoadGrid th:not(:first-child), .prLoadGrid td:not(:first-child) { text-align: right; }
