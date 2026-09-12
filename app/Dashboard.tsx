@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import metricsData from "./metrics.json";
 import PrManagement from "./PrManagement";
+
+const configuredReviewApiUrl = String(import.meta.env.VITE_REVIEW_API_URL || "").trim().replace(/\/+$/, "");
+type EditorConnection = "checking" | "connected" | "unavailable" | "not-configured";
 
 type Activity = {
   number: number;
@@ -265,8 +268,35 @@ export default function Dashboard() {
   const [memberId, setMemberId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState("");
+  const [editorConnection, setEditorConnection] = useState<EditorConnection>(configuredReviewApiUrl ? "checking" : "not-configured");
   const [beforeRange, setBeforeRange] = useState({ from: initialData.projectComparison?.before.from || "", to: initialData.projectComparison?.before.to || "" });
   const [afterRange, setAfterRange] = useState({ from: initialData.projectComparison?.after.from || "", to: initialData.projectComparison?.after.to || "" });
+
+  useEffect(() => {
+    const apiUrl = configuredReviewApiUrl || (["localhost", "127.0.0.1"].includes(window.location.hostname) ? "http://127.0.0.1:3101/api/reviews" : "");
+    if (!apiUrl) {
+      setEditorConnection("not-configured");
+      return;
+    }
+
+    let active = true;
+    async function checkEditorConnection() {
+      if (active) setEditorConnection("checking");
+      try {
+        const response = await fetch(apiUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error("API response error");
+        if (active) setEditorConnection("connected");
+      } catch {
+        if (active) setEditorConnection("unavailable");
+      }
+    }
+    void checkEditorConnection();
+    const timer = window.setInterval(() => void checkEditorConnection(), 60000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const filteredMembers = useMemo(() => data.members.map((member) => ({
     ...member,
@@ -406,6 +436,12 @@ export default function Dashboard() {
       setRefreshing(false);
     }
   }
+  const editorConnectionLabel: Record<EditorConnection, string> = {
+    checking: "편집 서버 확인 중",
+    connected: "편집 서버 연결됨",
+    unavailable: "편집 서버 연결 안 됨",
+    "not-configured": "편집 서버 URL 미설정",
+  };
 
   return (
     <main>
@@ -416,9 +452,12 @@ export default function Dashboard() {
         <nav aria-label="주요 메뉴">
           {(["overview", "members", "connections", "activity", "management"] as View[]).map((item) => <button className={view === item ? "active" : ""} key={item} onClick={() => setView(item)}>{item === "overview" ? "성과 개요" : item === "members" ? "멤버별 기여" : item === "connections" ? "통합 기여 현황" : item === "management" ? "PR 관리" : "활동 내역"}</button>)}
         </nav>
-        <div className="headerActions" style={view === "management" ? { visibility: "hidden" } : undefined}>
-          <button className="refreshButton" onClick={refreshData} disabled={refreshing} title="최근 배포된 수집 데이터를 다시 불러옵니다">{refreshing ? "불러오는 중…" : "↻ 최신 데이터"}</button>
-          <button className="exportButton" onClick={exportCsv}>CSV 내보내기 ↓</button>
+        <div className="headerActions">
+          <span className={"editorConnection " + editorConnection} role="status" title={editorConnectionLabel[editorConnection]}>
+            <i aria-hidden="true" />{editorConnectionLabel[editorConnection]}
+          </span>
+          {view !== "management" && <><button className="refreshButton" onClick={refreshData} disabled={refreshing} title="최근 배포된 수집 데이터를 다시 불러옵니다">{refreshing ? "불러오는 중…" : "↻ 최신 데이터"}</button>
+          <button className="exportButton" onClick={exportCsv}>CSV 내보내기 ↓</button></>}
         </div>
       </header>
 

@@ -133,7 +133,16 @@ main { min-height: 100vh; }
 .topbar nav button::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--blue); transform: scaleX(0); transition: .18s; }
 .topbar nav button.active { color: var(--ink); }
 .topbar nav button.active::after { transform: scaleX(1); }
-.headerActions { justify-self: end; display: flex; gap: 8px; }
+.headerActions { justify-self: end; display: flex; align-items: center; gap: 8px; }
+.editorConnection { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 10px; border: 1px solid #cbd3d9; border-radius: 6px; background: #fff; color: #5d6873; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.editorConnection i { width: 8px; height: 8px; border-radius: 999px; background: #a4adb6; }
+.editorConnection.connected { border-color: #9bd8c7; background: #f0fbf7; color: #08765c; }
+.editorConnection.connected i { background: #16a476; }
+.editorConnection.unavailable, .editorConnection.not-configured { border-color: #efc1ba; background: #fff5f3; color: #a43a3a; }
+.editorConnection.unavailable i, .editorConnection.not-configured i { background: #d54c42; }
+.editorConnection.checking { border-color: #e7d6ab; background: #fffaf0; color: #8a6419; }
+.editorConnection.checking i { background: #d69a25; animation: editor-pulse 1.1s ease-in-out infinite; }
+@keyframes editor-pulse { 50% { opacity: .35; } }
 .refreshButton, .exportButton { border: 1px solid #cbd3d9; border-radius: 6px; background: var(--white); padding: 10px 15px; font-size: 14px; font-weight: 800; cursor: pointer; }
 .refreshButton { border-color: var(--blue); color: var(--blue); }
 .refreshButton:hover { background: #edf3ff; }
