@@ -7,7 +7,8 @@ const comment = (login, body, id = 1) => ({ id, user: { login }, body, created_a
 const pr = { number: 1, author: "llokr1", state: "open", checkedAt: "2026-09-11", size: "size/L", completed: [] };
 test("수동 배정은 팀원만 가능하며 대소문자와 중복을 정규화한다", () => {
   assert.deepEqual(validateAssignment(pr, { reviewers: ["BcKmini", "bckmini"] }).reviewers, ["bckmini"]);
-  assert.throws(() => validateAssignment(pr, { reviewers: ["superson7"] }));
+  assert.deepEqual(validateAssignment(pr, { reviewers: ["SuperSon7"] }).reviewers, ["superson7"]);
+  assert.throws(() => validateAssignment(pr, { reviewers: ["unknown-user"] }));
   assert.throws(() => validateAssignment(pr, { reviewers: ["llokr1"] }));
 });
 test("일반 댓글, 인용, 취소된 lgtm은 완료가 아니다", () => {
@@ -36,4 +37,17 @@ test("미완료 열린 PR만 잔여 가중치에 포함하고 종료 이력은 �
 test("다른 저장소 이슈를 website 이슈로 오인하지 않으며 주석과 코드는 제외한다", () => {
   const issues = issueReferences("Fixes #12\nRelated: other/repo#44\n<!-- Fixes #99 -->\n```\nfixes #88\n```");
   assert.deepEqual(issues.map((x) => [x.number, x.repository, x.kind]), [[12, "kubernetes/website", "closing"], [44, "other/repo", "related"]]);
+});
+test("리뷰 현황은 사이즈, 미배정 완료, 제외 PR과 과거 두 팀 배정을 구분한다", () => {
+  const prs = [pr, {...pr,number:2,size:"size/XS",completed:[{login:"developowl"}]}, {...pr,number:3,size:"size/XXL"}, {...pr,number:4,size:null}];
+  const assignments = {1:{legacyReviewers:["DevelopOwl"],reviewOverrides:{developowl:true}},3:{reviewers:["developowl"],excluded:true},4:{reviewers:["developowl"]}};
+  const result = workload(prs,assignments,"developowl");
+  assert.equal(result.assigned,2);
+  assert.equal(result.completed,1);
+  assert.equal(result.voluntary,1);
+  assert.equal(result.sizes.L,1);
+  assert.equal(result.sizes.XXL,0);
+  assert.equal(result.totalWeight,60);
+  assert.equal(result.unknownSize,1);
+  assert.deepEqual(result.pendingNumbers,[4]);
 });

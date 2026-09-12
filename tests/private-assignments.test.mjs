@@ -8,8 +8,9 @@ test("공개 출력에는 리뷰어 ID와 제외 여부만 포함하고 내부 �
   assert.deepEqual(output, { "12345": { reviewers: ["bckmini"], excluded: true } });
   assert.doesNotMatch(JSON.stringify(output), /PRIVATE|INTERNAL|SECRET|2026-12-31/);
 });
-test("쿠버네티스 이외 수동 배정, 잘못된 타입과 날짜를 거부한다", () => {
-  for (const row of [{ reviewers: ["developowl"] }, { reviewers: "bckmini" }, { reviewers: [], excluded: "false" }, { reviewers: [], deadline: "2026-02-30" }, { reviewers: [], notes: {} }]) {
+test("두 팀 외 수동 배정, 잘못된 타입과 날짜를 거부한다", () => {
+  assert.deepEqual(projectAssignments(source({reviewers:["developowl"]}))["12345"].reviewers,["developowl"]);
+  for (const row of [{ reviewers: ["unknown-user"] }, { reviewers: "bckmini" }, { reviewers: [], excluded: "false" }, { reviewers: [], deadline: "2026-02-30" }, { reviewers: [], notes: {} }]) {
     assert.throws(() => projectAssignments(source(row)), /형식 오류/);
   }
   assert.throws(() => projectAssignments({ ...source({ reviewers: [] }), version: 2 }));
