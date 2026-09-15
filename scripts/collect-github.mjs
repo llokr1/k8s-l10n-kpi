@@ -36,6 +36,12 @@ const REUSE_EXISTING_ACTIVITY = process.env.REUSE_EXISTING_ACTIVITY === "1";
 const USE_ISSUE_RESOLUTION_CACHE = process.env.USE_ISSUE_RESOLUTION_CACHE === "1";
 const USE_PR_CONNECTION_CACHE = process.env.USE_PR_CONNECTION_CACHE === "1";
 const USE_PR_HTML_FALLBACK = process.env.USE_PR_HTML_FALLBACK === "1";
+const APPROVER_ROWS = [
+  { name: "신지훈", githubId: "developowl", member: true },
+  { name: "황원용", githubId: "wonyongg", member: false },
+  { name: "최영락", githubId: "ianychoi", member: false },
+  { name: "박은정", githubId: "eundms", member: false },
+];
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -478,6 +484,20 @@ async function fetchReviews(number) {
   return reviews;
 }
 
+async function fetchIssueComments(number) {
+  const comments = [];
+  for (let page = 1; page <= 10; page += 1) {
+    const batch = await github(`/repos/${OWNER}/${REPO}/issues/${number}/comments?per_page=100&page=${page}`);
+    comments.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return comments;
+}
+
+function hasApproveCommand(body) {
+  return String(body || "").split(/\r?\n/).some((line) => /^\/approve\s*$/i.test(line.trim()));
+}
+
 async function fetchIssueTimeline(number) {
   const events = [];
   for (let page = 1; page <= 10; page += 1) {
@@ -685,6 +705,53 @@ if (!REUSE_EXISTING_ACTIVITY) {
   }
 }
 
+let approvers = [];
+if (REUSE_EXISTING_ACTIVITY && existingPayload?.approvers) {
+  approvers = existingPayload.approvers;
+} else {
+  console.log(`Approver 활동 분석: ${APPROVER_ROWS.length}명`);
+  const reviewsCache = new Map();
+  const commentsCache = new Map();
+  const cachedReviews = (number) => {
+    if (!reviewsCache.has(number)) reviewsCache.set(number, fetchReviews(number));
+    return reviewsCache.get(number);
+  };
+  const cachedComments = (number) => {
+    if (!commentsCache.has(number)) commentsCache.set(number, fetchIssueComments(number));
+    return commentsCache.get(number);
+  };
+
+  for (const [index, approver] of APPROVER_ROWS.entries()) {
+    console.log(`  [${index + 1}/${APPROVER_ROWS.length}] ${approver.name} (@${approver.githubId})`);
+    const [reviewed, commented] = await Promise.all([
+      searchAll(`repo:${OWNER}/${REPO} is:pr reviewed-by:${approver.githubId} -author:${approver.githubId} updated:>=${ACTIVITY_START}`),
+      searchAll(`repo:${OWNER}/${REPO} is:pr commenter:${approver.githubId} -author:${approver.githubId} updated:>=${ACTIVITY_START}`),
+    ]);
+    const candidates = [...new Map([...reviewed, ...commented].map((item) => [item.number, compact(item)])).values()];
+    const activities = await mapLimit(candidates, TOKEN ? 5 : 2, async (pr) => {
+      const [reviews, comments] = await Promise.all([cachedReviews(pr.number), cachedComments(pr.number)]);
+      const ownReviews = reviews.filter((review) => review.user?.login?.toLowerCase() === approver.githubId && review.submitted_at?.slice(0, 10) >= ACTIVITY_START);
+      const ownCommands = comments.filter((comment) => comment.user?.login?.toLowerCase() === approver.githubId && comment.created_at?.slice(0, 10) >= ACTIVITY_START && hasApproveCommand(comment.body));
+      return { pr, ownReviews, ownCommands };
+    });
+    const reviewedPullRequests = activities.flatMap(({ pr, ownReviews }) => {
+      if (!ownReviews.length) return [];
+      const latest = [...ownReviews].sort((a, b) => b.submitted_at.localeCompare(a.submitted_at))[0];
+      return [{ ...pr, reviewedAt: latest.submitted_at, reviewState: latest.state?.toLowerCase() || "commented", reviewCount: ownReviews.length }];
+    }).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt));
+    const approvedPullRequests = activities.flatMap(({ pr, ownReviews, ownCommands }) => {
+      const approvedReviews = ownReviews.filter((review) => review.state === "APPROVED");
+      const events = [
+        ...approvedReviews.map((review) => ({ at: review.submitted_at, method: "github_review" })),
+        ...ownCommands.map((comment) => ({ at: comment.created_at, method: "approve_command" })),
+      ].sort((a, b) => b.at.localeCompare(a.at));
+      if (!events.length) return [];
+      return [{ ...pr, approvedAt: events[0].at, approveCount: events.length, approvalMethods: [...new Set(events.map((event) => event.method))] }];
+    }).sort((a, b) => b.approvedAt.localeCompare(a.approvedAt));
+    approvers.push({ ...approver, reviewedPullRequests, approvedPullRequests });
+  }
+}
+
 const memberById = new Map(memberRows.map((person) => [person.githubId, { ...person, role: "member" }]));
 const mentorById = new Map(mentorRows.map((person) => [person.githubId, { ...person, role: "mentor" }]));
 const knownIssues = new Map(members.flatMap((member) => member.issues.map((issue) => [issue.number, issue])));
@@ -803,7 +870,7 @@ try {
 }
 
 const payload = {
-  schemaVersion: 7,
+  schemaVersion: 8,
   generatedAt: new Date().toISOString(),
   repository: { owner: OWNER, name: REPO, url: `https://github.com/${OWNER}/${REPO}` },
   collection: {
@@ -817,6 +884,7 @@ const payload = {
   },
   members,
   mentors: mentorRows,
+  approvers,
   contributionConnections,
   translationCompletion,
   projectComparison,
