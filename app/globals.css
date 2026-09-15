@@ -324,6 +324,7 @@ main { min-height: 100vh; }
 .approverGrid { margin-top: 20px; }
 .approverCard { border-color: #d8cdef; background: #fdfcff; }
 .approverCard:hover { border-color: #9478cc; }
+.approverStats { grid-template-columns: repeat(2, 1fr); }
 .miniStats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 19px; padding-top: 14px; border-top: 1px solid var(--line); }
 .miniStats span { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 9px; }
 .miniStats b { color: var(--ink); font-size: 14px; }

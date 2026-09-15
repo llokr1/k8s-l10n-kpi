@@ -739,14 +739,10 @@ if (REUSE_EXISTING_ACTIVITY && existingPayload?.approvers) {
       const latest = [...ownReviews].sort((a, b) => b.submitted_at.localeCompare(a.submitted_at))[0];
       return [{ ...pr, reviewedAt: latest.submitted_at, reviewState: latest.state?.toLowerCase() || "commented", reviewCount: ownReviews.length }];
     }).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt));
-    const approvedPullRequests = activities.flatMap(({ pr, ownReviews, ownCommands }) => {
-      const approvedReviews = ownReviews.filter((review) => review.state === "APPROVED");
-      const events = [
-        ...approvedReviews.map((review) => ({ at: review.submitted_at, method: "github_review" })),
-        ...ownCommands.map((comment) => ({ at: comment.created_at, method: "approve_command" })),
-      ].sort((a, b) => b.at.localeCompare(a.at));
-      if (!events.length) return [];
-      return [{ ...pr, approvedAt: events[0].at, approveCount: events.length, approvalMethods: [...new Set(events.map((event) => event.method))] }];
+    const approvedPullRequests = activities.flatMap(({ pr, ownCommands }) => {
+      if (!ownCommands.length) return [];
+      const latest = [...ownCommands].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+      return [{ ...pr, approvedAt: latest.created_at, approveCount: ownCommands.length, approvalMethods: ["approve_command"] }];
     }).sort((a, b) => b.approvedAt.localeCompare(a.approvedAt));
     approvers.push({ ...approver, reviewedPullRequests, approvedPullRequests });
   }
