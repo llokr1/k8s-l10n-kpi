@@ -177,6 +177,8 @@ const translationCategoryOrder = [
   { key: "home", label: "Home" },
 ] as const;
 
+const prSizeOrder = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+
 const fmt = new Intl.NumberFormat("ko-KR");
 const dateFmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "short", day: "numeric" });
 const compactFmt = new Intl.DateTimeFormat("ko-KR", { month: "short", day: "numeric" });
@@ -358,6 +360,21 @@ export default function Dashboard() {
     };
   }, [filteredMembers]);
 
+  const sizeContributions = useMemo(() => {
+    const pullRequests = filteredMembers.flatMap((member) => member.pullRequests);
+    return prSizeOrder.map((size) => {
+      const sizeLabel = `size/${size}`.toLowerCase();
+      const matched = pullRequests.filter((pr) => pr.labels.some((label) => label.toLowerCase() === sizeLabel));
+      return {
+        size,
+        open: matched.filter((pr) => pr.state === "open").length,
+        merged: matched.filter((pr) => pr.state === "merged").length,
+      };
+    });
+  }, [filteredMembers]);
+
+  const sizeContributionMax = useMemo(() => Math.max(1, ...sizeContributions.flatMap((item) => [item.open, item.merged])), [sizeContributions]);
+
   const memberStats = useMemo(() => filteredMembers.map((member) => ({
     ...member,
     approver: filteredApprovers.some((approver) => approver.githubId === member.githubId),
@@ -530,6 +547,45 @@ export default function Dashboard() {
           <article><span>PR 머지율</span><strong>{totals.mergeRate}%</strong></article>
           <article><span>리뷰 참여 멤버</span><strong>{totals.reviewMembers}명</strong></article>
           <article><span>평균 머지 소요</span><strong>{totals.avgCycle ? `${totals.avgCycle.toFixed(1)}일` : "—"}</strong></article>
+        </section>
+
+        <section className="sizeContributionPanel" aria-label="PR 사이즈별 기여 현황">
+          <div className="sizeContributionHeader">
+            <div>
+              <h2>사이즈별 PR 기여</h2>
+              <p>선택 기간에 멤버가 생성한 PR을 GitHub <code>size/*</code> 라벨 기준으로 집계합니다.</p>
+            </div>
+            <div className="sizeChartLegend" aria-label="그래프 범례">
+              <span className="open">진행 중</span>
+              <span className="merged">머지됨</span>
+            </div>
+          </div>
+          <div className="sizeChartScroll">
+            <div className="sizeChart" role="img" aria-label="PR 사이즈별 진행 중 및 머지 건수 비교 막대그래프">
+              <div className="sizeChartScale" aria-hidden="true">
+                <span>{fmt.format(sizeContributionMax)}</span>
+                <span>{fmt.format(Math.ceil(sizeContributionMax / 2))}</span>
+                <span>0</span>
+              </div>
+              <div className="sizeChartPlot">
+                <div className="sizeChartGroups">
+                  {sizeContributions.map((item) => <article key={item.size} aria-label={`size/${item.size}: 진행 중 ${item.open}건, 머지됨 ${item.merged}건`}>
+                    <div className="sizeChartBars">
+                      <span className="open">
+                        <strong>{fmt.format(item.open)}</strong>
+                        <i style={{ height: `${item.open / sizeContributionMax * 100}%` }} />
+                      </span>
+                      <span className="merged">
+                        <strong>{fmt.format(item.merged)}</strong>
+                        <i style={{ height: `${item.merged / sizeContributionMax * 100}%` }} />
+                      </span>
+                    </div>
+                    <b>{item.size}</b>
+                  </article>)}
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {comparison && <section className="comparisonPanel" aria-label="오픈소스 컨트리뷰션 아카데미 활동 전후 한국어 PR 비교">
