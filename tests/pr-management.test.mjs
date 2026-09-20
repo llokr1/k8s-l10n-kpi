@@ -38,16 +38,16 @@ test("다른 저장소 이슈를 website 이슈로 오인하지 않으며 주석
   const issues = issueReferences("Fixes #12\nRelated: other/repo#44\n<!-- Fixes #99 -->\n```\nfixes #88\n```");
   assert.deepEqual(issues.map((x) => [x.number, x.repository, x.kind]), [[12, "kubernetes/website", "closing"], [44, "other/repo", "related"]]);
 });
-test("리뷰 현황은 사이즈, 미배정 완료, 제외 PR과 과거 두 팀 배정을 구분한다", () => {
+test("리뷰 현황은 모든 리뷰 이력의 사이즈, 자발적 완료, 제외 PR과 과거 두 팀 배정을 집계한다", () => {
   const prs = [pr, {...pr,number:2,size:"size/XS",completed:[{login:"developowl"}]}, {...pr,number:3,size:"size/XXL"}, {...pr,number:4,size:null}];
   const assignments = {1:{legacyReviewers:["DevelopOwl"],reviewOverrides:{developowl:true}},3:{reviewers:["developowl"],excluded:true},4:{reviewers:["developowl"]}};
   const result = workload(prs,assignments,"developowl");
-  assert.equal(result.assigned,2);
-  assert.equal(result.completed,1);
+  assert.equal(result.assigned,4);
+  assert.equal(result.completed,2);
   assert.equal(result.voluntary,1);
   assert.equal(result.sizes.L,1);
-  assert.equal(result.sizes.XXL,0);
-  assert.equal(result.totalWeight,60);
+  assert.equal(result.sizes.XXL,1);
+  assert.equal(result.totalWeight,361);
   assert.equal(result.unknownSize,1);
-  assert.deepEqual(result.pendingNumbers,[4]);
+  assert.deepEqual(result.pendingNumbers,[3,4]);
 });

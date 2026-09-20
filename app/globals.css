@@ -13,6 +13,7 @@
 .prSync label { display: flex; align-items: center; gap: 5px; }
 .prSync b { margin-left: 6px; }
 .prSync button { color: #255bb8; border-color: #a9c0e7; }
+.prRefreshHint { flex-basis: 100%; color: #778592; font-size: 11px; text-align: right; }
 .prNotice, .prError, .prFeedback { font-size: 14px; padding: 12px 15px; line-height: 1.6; border-radius: 5px; margin: 10px 0; }
 .prNotice { color: #71551c; background: #fff7e5; border: 1px solid #ecdcba; }
 .prNotice > small { display: block; margin-top: 4px; font-size: .875rem; }
@@ -75,7 +76,7 @@
 .prEditFields { display: grid; grid-template-columns: 180px 1fr; gap: 15px; margin: 20px 0 14px; }
 .prEditor footer { display: flex; justify-content: flex-end; margin-top: 16px; }
 .prEditor .primary { background: #326ce5; border-color: #326ce5; color: #fff; }
-@media (max-width: 1000px) { .prHeading { align-items: flex-start; flex-direction: column; } .prSync { justify-content: flex-start; } .prToolbar { flex-wrap: wrap; } .prToolbar label:first-child { flex-basis: 100%; max-width: none; } .prEditFields { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { .prHeading { align-items: flex-start; flex-direction: column; } .prSync { justify-content: flex-start; } .prRefreshHint { text-align: left; } .prToolbar { flex-wrap: wrap; } .prToolbar label:first-child { flex-basis: 100%; max-width: none; } .prEditFields { grid-template-columns: 1fr; } }
 
 /* Compact PR sheet: all 13 columns fit a typical desktop viewport. */
 .prManagement { padding: 18px clamp(10px, 1.4vw, 24px) 32px; }
@@ -358,8 +359,20 @@ main { min-height: 100vh; }
 .memberSizeStats > div, .drawerSizeStats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; }
 .memberSizeStats span, .drawerSizeStats span { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 3px; border-radius: 5px; background: #edf3ff; padding: 7px 3px; color: var(--blue); }
 .memberSizeStats span.empty, .drawerSizeStats span.empty { background: #f1f3f4; color: #98a1a8; }
+.memberSizeStats span.hasMerged, .drawerSizeStats span.hasMerged { box-shadow: inset 0 -3px 0 var(--mint); }
 .memberSizeStats span b, .drawerSizeStats span b { font: 800 9px ui-monospace, monospace; }
 .memberSizeStats span strong, .drawerSizeStats span strong { font-size: 15px; line-height: 1; }
+.memberSizeStats span em, .drawerSizeStats span em { color: var(--mint); font-size: 8px; font-style: normal; font-weight: 800; white-space: nowrap; }
+.memberSizeStats span.empty em, .drawerSizeStats span.empty em { color: #98a1a8; }
+.membershipMinimum { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; border-radius: 6px; padding: 10px 12px; }
+.membershipMinimum > span { display: flex; flex-direction: column; gap: 3px; }
+.membershipMinimum small { font-size: 9px; font-weight: 800; }
+.membershipMinimum b { font-size: 12px; }
+.membershipMinimum > strong { font-size: 17px; }
+.membershipMinimum.met { background: #e8f6f1; color: #08765c; }
+.membershipMinimum.remaining { background: #fff5e4; color: #996416; }
+.membershipNote { margin: 18px 0 0; border-left: 3px solid var(--blue); background: #f5f8fd; padding: 13px 15px; color: var(--muted); font-size: 11px; line-height: 1.65; }
+.membershipNote a { color: var(--blue); font-weight: 800; }
 
 .activityFilters { display: flex; justify-content: space-between; gap: 20px; margin: 27px 0 14px; }
 .activityFilters input { width: min(440px, 50%); border: 1px solid #cbd3d9; border-radius: 5px; background: var(--white); padding: 13px 15px; font-size: 14px; outline: none; }
@@ -445,6 +458,8 @@ main { min-height: 100vh; }
 .drawerSizeStats span { padding: 10px 4px; }
 .drawerSizeStats span b { font-size: 10px; }
 .drawerSizeStats span strong { font-size: 20px; }
+.drawerSizeStats span em { font-size: 9px; }
+.drawerMembership { margin: 0 0 28px; }
 .drawerActivities { border-top: 2px solid var(--ink); }
 .drawerActivities a { display: grid; grid-template-columns: 46px 1fr; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .drawerActivities > a > span { color: var(--blue); font-size: 10px; font-weight: 800; }

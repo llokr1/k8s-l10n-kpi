@@ -197,8 +197,9 @@ function formatMetric(value: number | null, unit: string, digits = 1) {
 function countPrSizes(pullRequests: Activity[]) {
   return Object.fromEntries(prSizeOrder.map((size) => {
     const label = `size/${size}`.toLowerCase();
-    return [size, pullRequests.filter((pr) => pr.labels.some((item) => item.toLowerCase() === label)).length];
-  })) as Record<PrSize, number>;
+    const matched = pullRequests.filter((pr) => pr.labels.some((item) => item.toLowerCase() === label));
+    return [size, { total: matched.length, merged: matched.filter((pr) => pr.state === "merged").length }];
+  })) as Record<PrSize, { total: number; merged: number }>;
 }
 
 function summarizeComparisonRange(from: string, to: string, records: ComparisonRecord[], fallback: ComparisonPeriod) {
@@ -389,6 +390,7 @@ export default function Dashboard() {
     merged: member.pullRequests.filter((pr) => pr.state === "merged").length,
     korean: member.pullRequests.filter((pr) => pr.isKorean).length,
     sizes: countPrSizes(member.pullRequests),
+    membershipMergedPrs: new Set([...member.pullRequests, ...member.reviewedPullRequests].filter((pr) => pr.state === "merged").map((pr) => pr.number)).size,
     resolvedIssues: member.issues.filter((issue) => issue.resolution === "resolved_by_merged_pr").length,
     total: member.issues.length + member.pullRequests.length + member.reviewedPullRequests.length,
   })).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "ko")), [filteredMembers, filteredApprovers]);
@@ -719,11 +721,13 @@ export default function Dashboard() {
         <div className="memberGrid">{memberStats.map((member) => <button className="memberCard" key={member.githubId} onClick={() => setMemberId(member.githubId)}>
           <div className="memberTop"><img src={`https://github.com/${member.githubId}.png?size=96`} alt="" /><span><b>{member.name}{member.approver && <i className="roleBadge">Approver</i>}</b><small>@{member.githubId}</small></span><strong>{member.total}</strong></div>
           <div className="miniStats"><span><b>{member.issues.length}</b>이슈</span><span><b>{member.pullRequests.length}</b>PR</span><span><b>{member.merged}</b>머지</span><span><b>{member.reviewedPullRequests.length}</b>리뷰</span></div>
+          <div className={`membershipMinimum ${member.membershipMergedPrs > 0 ? "met" : "remaining"}`}><span><small>작성·리뷰 PR 최소 머지 기준</small><b>{Math.max(0, 1 - member.membershipMergedPrs)}건 남음</b></span><strong>{member.membershipMergedPrs} / 1</strong></div>
           <div className="memberSizeStats" aria-label={`${member.name} PR 사이즈별 생성 횟수`}>
-            <small>PR 사이즈별 기여</small>
-            <div>{prSizeOrder.map((size) => <span className={member.sizes[size] ? "" : "empty"} key={size}><b>{size}</b><strong>{member.sizes[size]}</strong></span>)}</div>
+            <small>PR 사이즈별 기여 · 전체 / 머지</small>
+            <div>{prSizeOrder.map((size) => <span className={`${member.sizes[size].total ? "" : "empty"} ${member.sizes[size].merged ? "hasMerged" : ""}`} key={size}><b>{size}</b><strong>{member.sizes[size].total}</strong><em>머지 {member.sizes[size].merged}</em></span>)}</div>
           </div>
         </button>)}</div>
+        <p className="membershipNote"><b>멤버십 참고</b> 공식 Member 기준은 고정된 총 기여 횟수를 제시하지 않습니다. 위 “남은 건수”는 정량 확인이 가능한 <b>작성하거나 리뷰한 PR 중 최소 1건 머지</b>만 계산하며, 지속적인 기여·활성 subproject·서로 다른 회사의 Reviewer/Approver 스폰서 2명 등은 별도로 충족해야 합니다. 사이즈별 수치는 멤버가 직접 작성한 PR만 집계합니다. <a href="https://github.com/kubernetes/community/blob/main/community-membership.md#member" target="_blank" rel="noreferrer">공식 기준 ↗</a></p>
         <div className="sectionHead approverSectionHead"><h2>Approver 활동</h2><p>실제 GitHub Review와 <code>/approve</code> 승인 PR을 집계합니다.</p></div>
         <div className="memberGrid approverGrid">{filteredApprovers.map((approver) => {
           const activityPulls = new Set([...approver.reviewedPullRequests, ...approver.approvedPullRequests].map((item) => item.number)).size;
@@ -778,7 +782,7 @@ export default function Dashboard() {
         ...selectedApprover.approvedPullRequests.map((item) => ({ ...item, kind: "승인", activityAt: item.approvedAt || item.updatedAt, detail: "/approve" })),
       ].sort((a, b) => b.activityAt.localeCompare(a.activityAt)).slice(0, 30).map((item, index) => <a href={item.url} target="_blank" rel="noreferrer" key={`${item.kind}-${item.number}-${index}`}><span>{item.kind}</span><div><b>#{item.number} {item.title}</b><small>{dateFmt.format(new Date(item.activityAt))} · {item.detail}</small></div></a>)}</div></aside></div>}
 
-      {selectedMember && <div className="drawerBackdrop"><button className="drawerDismiss" onClick={() => setMemberId(null)} aria-label="멤버 상세 닫기" /><aside className="memberDrawer" role="dialog" aria-modal="true" aria-label={`${selectedMember.name} 상세 기여`}><button className="closeButton" onClick={() => setMemberId(null)} aria-label="닫기">×</button><div className="drawerProfile"><img src={`https://github.com/${selectedMember.githubId}.png?size=128`} alt="" /><div><h2>{selectedMember.name}{selectedMember.approver && <i className="roleBadge">Approver</i>}</h2><a href={`https://github.com/${selectedMember.githubId}`} target="_blank" rel="noreferrer">@{selectedMember.githubId} ↗</a></div></div><div className="drawerStats"><span><strong>{selectedMember.issues.length}</strong>이슈</span><span><strong>{selectedMember.pullRequests.length}</strong>PR</span><span><strong>{selectedMember.merged}</strong>머지</span><span><strong>{selectedMember.reviewedPullRequests.length}</strong>리뷰</span></div><h3>PR 사이즈별 기여</h3><div className="drawerSizeStats">{prSizeOrder.map((size) => <span className={selectedMember.sizes[size] ? "" : "empty"} key={size}><b>{size}</b><strong>{selectedMember.sizes[size]}</strong></span>)}</div><h3>최근 활동</h3><div className="drawerActivities">{[
+      {selectedMember && <div className="drawerBackdrop"><button className="drawerDismiss" onClick={() => setMemberId(null)} aria-label="멤버 상세 닫기" /><aside className="memberDrawer" role="dialog" aria-modal="true" aria-label={`${selectedMember.name} 상세 기여`}><button className="closeButton" onClick={() => setMemberId(null)} aria-label="닫기">×</button><div className="drawerProfile"><img src={`https://github.com/${selectedMember.githubId}.png?size=128`} alt="" /><div><h2>{selectedMember.name}{selectedMember.approver && <i className="roleBadge">Approver</i>}</h2><a href={`https://github.com/${selectedMember.githubId}`} target="_blank" rel="noreferrer">@{selectedMember.githubId} ↗</a></div></div><div className="drawerStats"><span><strong>{selectedMember.issues.length}</strong>이슈</span><span><strong>{selectedMember.pullRequests.length}</strong>PR</span><span><strong>{selectedMember.merged}</strong>머지</span><span><strong>{selectedMember.reviewedPullRequests.length}</strong>리뷰</span></div><div className={`membershipMinimum drawerMembership ${selectedMember.membershipMergedPrs > 0 ? "met" : "remaining"}`}><span><small>작성·리뷰 PR 최소 머지 기준</small><b>{Math.max(0, 1 - selectedMember.membershipMergedPrs)}건 남음</b></span><strong>{selectedMember.membershipMergedPrs} / 1</strong></div><h3>PR 사이즈별 기여</h3><div className="drawerSizeStats">{prSizeOrder.map((size) => <span className={`${selectedMember.sizes[size].total ? "" : "empty"} ${selectedMember.sizes[size].merged ? "hasMerged" : ""}`} key={size}><b>{size}</b><strong>{selectedMember.sizes[size].total}</strong><em>머지 {selectedMember.sizes[size].merged}</em></span>)}</div><h3>최근 활동</h3><div className="drawerActivities">{[
         ...selectedMember.issues.map((item) => ({ ...item, kind: "이슈" })),
         ...selectedMember.pullRequests.map((item) => ({ ...item, kind: "PR" })),
         ...selectedMember.reviewedPullRequests.map((item) => ({ ...item, kind: "리뷰", createdAt: item.reviewedAt || item.updatedAt })),

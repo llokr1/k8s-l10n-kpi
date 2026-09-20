@@ -30,6 +30,11 @@ REVIEW_GIT_DIRECTORY=/path/to/private-review-repository npm run review:server
 - `REVIEW_ALLOWED_HOSTS`: Caddy에서 사용할 공개 API 호스트명
 - `REVIEW_PUBLIC_SNAPSHOT_URL`: 배포된 `data/pr-management.json`의 전체 주소
 - `REVIEW_GIT_DIRECTORY`: 집 PC에 clone한 Private 저장소의 절대경로
+- `REVIEW_ACTIONS_TOKEN`: 사이트 저장소에만 접근하며 Actions 읽기·쓰기 권한을 가진 Fine-grained PAT
+- `REVIEW_ACTIONS_TRIGGER_KEY`: 최신 데이터 수집 버튼에서 입력할 충분히 긴 임의 문자열
+- `REVIEW_ACTIONS_REPOSITORY`: Actions를 실행할 공개 사이트 저장소. 현재 `llokr1/k8s-l10n-kpi`
+- `REVIEW_ACTIONS_WORKFLOW`: 실행할 workflow 파일. 현재 `pr-management.yml`
+- `REVIEW_ACTIONS_REF`: workflow를 실행할 브랜치. 현재 `main`
 
 Private 저장소 clone은 main 브랜치와 깨끗한 작업 트리를 유지해야 합니다. 편집 서버를 실행하는 OS 계정에서 `git fetch`, `git commit`, `git push`가 비대화식으로 성공하도록 Git 인증과 사용자 이름·이메일을 설정합니다.
 
@@ -43,6 +48,7 @@ Private 저장소 clone은 main 브랜치와 깨끗한 작업 트리를 유지�
 PR_ASSIGNMENTS_REPOSITORY와 PR_ASSIGNMENTS_WRITE_TOKEN을 서버 환경에만 설정합니다.
 토큰은 Private 저장소 하나의 Contents 읽기·쓰기 권한만 필요하며 브라우저/빌드 변수에 넣지 않습니다.
 Actions에서 사용하는 PR_ASSIGNMENTS_TOKEN은 기존 읽기 전용 권한을 유지합니다.
+화면의 **최신 데이터 수집** 버튼은 편집 서버의 `POST /api/reviews/refresh`를 호출합니다. 최초 실행 시 `REVIEW_ACTIONS_TRIGGER_KEY` 값을 한 번 입력하며 해당 브라우저에 보관되어 이후부터는 버튼만 누르면 바로 실행됩니다. 편집 서버가 `workflow_dispatch`를 요청하므로 `REVIEW_ACTIONS_TOKEN`은 브라우저나 Pages 빌드 변수에 넣지 않습니다. 버튼과 서버 모두 실행 후 5분 동안 재실행을 막습니다. 수집과 Pages 배포에는 일반적으로 약 4~5분이 걸리며, 화면의 5분 자동 불러오기가 완료된 배포 JSON을 반영합니다.
 
 ## 시트 이관
 

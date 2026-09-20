@@ -23,6 +23,7 @@ type Data = {
 const emptyManual: Manual = { reviewers: [], excluded: false };
 const labels: Record<string, string> = { all: "전체", unassigned: "미배정", reviewing: "리뷰 중", approver: "Approver 점검", approved: "승인됨", draft: "Draft", merged: "Merged", closed: "Closed", excluded: "번역 PR X", unknown: "확인 필요" };
 const date = (value?: string | null, withTime = false) => value && !Number.isNaN(new Date(value).getTime()) ? new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "short", ...(withTime ? { timeStyle: "short" as const } : {}) }).format(new Date(value)) : "—";
+const countdown = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 const configuredReviewApiUrl = String(import.meta.env.VITE_REVIEW_API_URL || "").trim().replace(/\/+$/, "");
 
 export default function PrManagement({ members }: { members: { name: string; githubId: string }[] }) {
@@ -32,6 +33,9 @@ export default function PrManagement({ members }: { members: { name: string; git
   const [query, setQuery] = useState("");
   const [reviewerFilter, setReviewerFilter] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dispatching, setDispatching] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -41,7 +45,12 @@ export default function PrManagement({ members }: { members: { name: string; git
   const [noteSaving, setNoteSaving] = useState(false);
   const connected = Boolean(internal) || data.assignmentSource?.status === "connected";
   const assignments = useMemo(() => internal?.assignments || data.assignments || {}, [internal, data.assignments]);
-  const prs = internal?.pullRequests || data.pullRequests;
+  const prs = useMemo(() => {
+    const combined = new Map<number, PullRequest>((internal?.pullRequests || []).map((pr) => [pr.number, pr]));
+    for (const pr of data.pullRequests) combined.set(pr.number, { ...combined.get(pr.number), ...pr, imported: false });
+    return [...combined.values()].sort((a, b) => b.number - a.number);
+  }, [internal?.pullRequests, data.pullRequests]);
+  const displayedCollectedAt = !internal?.githubCollectedAt || (data.generatedAt && data.generatedAt > internal.githubCollectedAt) ? data.generatedAt : internal.githubCollectedAt;
   const apiUrl = () => {
     if (configuredReviewApiUrl) return configuredReviewApiUrl;
     if (["localhost", "127.0.0.1"].includes(window.location.hostname)) return "http://127.0.0.1:3101/api/reviews";
@@ -55,10 +64,29 @@ export default function PrManagement({ members }: { members: { name: string; git
     setInternal(value);
   }
   const initialLoad = useEffectEvent(() => { void refreshInternal().catch(() => {}); });
+  const reloadAfterCooldown = useEffectEvent(() => { if (autoRefresh && !document.hidden) void refresh(); });
   useEffect(() => {
     const timer = setTimeout(initialLoad, 0);
     return () => clearTimeout(timer);
   }, []);
+  useEffect(() => {
+    setCooldownUntil(Number(window.localStorage.getItem("review-actions-cooldown-until") || 0));
+  }, []);
+  useEffect(() => {
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      setCooldownSeconds(remaining);
+      if (cooldownUntil && remaining === 0) {
+        window.localStorage.removeItem("review-actions-cooldown-until");
+        setCooldownUntil(0);
+        reloadAfterCooldown();
+      }
+    };
+    update();
+    if (!cooldownUntil) return;
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownUntil]);
   async function saveSelection(pr: PullRequest, kind: "reviewers" | "completed", chosen: string[], revision: string) {
     const manual = assignments[pr.number] || emptyManual;
     const next: Manual = { notes: "", ...manual, reviewers: assignedReviewers(pr, manual) };
@@ -115,9 +143,33 @@ export default function PrManagement({ members }: { members: { name: string; git
       if (next.repository !== "kubernetes/website" || !Array.isArray(next.pullRequests) || !Array.isArray(next.errors) || !next.trackingStart) throw new Error("수집 데이터 형식을 확인해주세요.");
       setData(next);
       if (internal) await refreshInternal();
-      setMessage("최근 배포된 수집 결과를 불러왔습니다. 새 GitHub 수집은 예약 작업 또는 Actions에서 실행합니다.");
+      setMessage("최근 배포된 수집 결과를 불러왔습니다.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "불러오기 실패"); }
     finally { setBusy(false); }
+  }
+  async function triggerGithubRefresh() {
+    let triggerKey = window.localStorage.getItem("review-actions-trigger-key") || "";
+    if (!triggerKey) triggerKey = window.prompt("최신 데이터 수집 실행 키를 입력하세요.")?.trim() || "";
+    if (!triggerKey) return;
+    setDispatching(true); setError(""); setMessage("");
+    try {
+      const response = await fetch(apiUrl() + "/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Review-Trigger-Key": triggerKey },
+        body: "{}",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 401) window.localStorage.removeItem("review-actions-trigger-key");
+        throw new Error(result.error || "GitHub 최신 데이터 수집을 시작하지 못했습니다.");
+      }
+      const until = Date.now() + 300000;
+      window.localStorage.setItem("review-actions-trigger-key", triggerKey);
+      window.localStorage.setItem("review-actions-cooldown-until", String(until));
+      setCooldownUntil(until);
+      setMessage(`${result.message || "GitHub 최신 데이터 수집을 요청했습니다."} 반영까지 약 ${result.estimatedMinutes || "4~5"}분이 걸립니다.`);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "GitHub 최신 데이터 수집 요청 실패"); }
+    finally { setDispatching(false); }
   }
   const onAutoRefresh = useEffectEvent(() => { if (!document.hidden) void refresh(); });
   useEffect(() => {
@@ -139,7 +191,7 @@ export default function PrManagement({ members }: { members: { name: string; git
   }
 
   return <section className="prManagement">
-    <header className="prHeading"><div><h1>한국어 번역 PR 관리</h1><p>kubernetes/website · {date(data.trackingStart)} 이후{internal ? " · 기존 시트 이력 포함" : data.includeOpenBacklog ? " · 기존 Open 후보 포함" : " 생성된 PR"} · 종료 후에도 기록 유지</p></div><div className="prSync"><span>최근 수집 <b>{date(internal?.githubCollectedAt || data.generatedAt, true)}</b></span><button onClick={refresh} disabled={busy}>{busy ? "불러오는 중…" : "↻ 최신 데이터"}</button><label><input type="checkbox" checked={autoRefresh} onChange={(event) => setAutoRefresh(event.target.checked)} />5분마다 불러오기</label></div></header>
+    <header className="prHeading"><div><h1>한국어 번역 PR 관리</h1><p>kubernetes/website · {date(data.trackingStart)} 이후{internal ? " · 기존 시트 이력 포함" : data.includeOpenBacklog ? " · 기존 Open 후보 포함" : " 생성된 PR"} · 종료 후에도 기록 유지</p></div><div className="prSync"><span>최근 수집 <b>{date(displayedCollectedAt, true)}</b></span><button onClick={triggerGithubRefresh} disabled={dispatching || cooldownSeconds > 0}>{dispatching ? "요청 중…" : cooldownSeconds > 0 ? `${countdown(cooldownSeconds)} 후 재실행` : "↻ 최신 데이터 수집"}</button><label><input type="checkbox" checked={autoRefresh} onChange={(event) => setAutoRefresh(event.target.checked)} />5분마다 불러오기</label><small className="prRefreshHint">{cooldownSeconds > 0 ? "수집·배포 진행 중 · 완료 후 자동으로 다시 불러옵니다." : "수집·배포 완료까지 약 4~5분"}</small></div></header>
     {!internal && <div className="prNotice">내부 편집 연결 대기 <button onClick={() => refreshInternal().catch(cause => setError(cause.message))}>편집 서버 연결</button></div>}
     {!data.discoveryComplete && <p className="prNotice">아직 전체 수집이 완료되지 않았습니다. 아래 목록과 집계는 전체 PR 현황으로 볼 수 없습니다.</p>}
     {data.errors.length > 0 && <details className="prNotice"><summary>수집 오류 {data.errors.length}건 · 마지막 정상 데이터 유지</summary>{data.errors.map((item, index) => <p key={index}>{item}</p>)}</details>}
