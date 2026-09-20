@@ -178,6 +178,7 @@ const translationCategoryOrder = [
 ] as const;
 
 const prSizeOrder = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+type PrSize = (typeof prSizeOrder)[number];
 
 const fmt = new Intl.NumberFormat("ko-KR");
 const dateFmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "short", day: "numeric" });
@@ -191,6 +192,13 @@ function formatPeriod(period: ComparisonPeriod) {
 
 function formatMetric(value: number | null, unit: string, digits = 1) {
   return value === null ? "—" : `${value.toFixed(digits)}${unit}`;
+}
+
+function countPrSizes(pullRequests: Activity[]) {
+  return Object.fromEntries(prSizeOrder.map((size) => {
+    const label = `size/${size}`.toLowerCase();
+    return [size, pullRequests.filter((pr) => pr.labels.some((item) => item.toLowerCase() === label)).length];
+  })) as Record<PrSize, number>;
 }
 
 function summarizeComparisonRange(from: string, to: string, records: ComparisonRecord[], fallback: ComparisonPeriod) {
@@ -380,6 +388,7 @@ export default function Dashboard() {
     approver: filteredApprovers.some((approver) => approver.githubId === member.githubId),
     merged: member.pullRequests.filter((pr) => pr.state === "merged").length,
     korean: member.pullRequests.filter((pr) => pr.isKorean).length,
+    sizes: countPrSizes(member.pullRequests),
     resolvedIssues: member.issues.filter((issue) => issue.resolution === "resolved_by_merged_pr").length,
     total: member.issues.length + member.pullRequests.length + member.reviewedPullRequests.length,
   })).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "ko")), [filteredMembers, filteredApprovers]);
@@ -706,8 +715,15 @@ export default function Dashboard() {
       </>}
 
       {view === "members" && <section className="contentSection">
-        <div className="sectionHead"><h2>멤버별 기여</h2><p>카드를 선택하면 상세 활동을 볼 수 있습니다.</p></div>
-        <div className="memberGrid">{memberStats.map((member) => <button className="memberCard" key={member.githubId} onClick={() => setMemberId(member.githubId)}><div className="memberTop"><img src={`https://github.com/${member.githubId}.png?size=96`} alt="" /><span><b>{member.name}{member.approver && <i className="roleBadge">Approver</i>}</b><small>@{member.githubId}</small></span><strong>{member.total}</strong></div><div className="miniStats"><span><b>{member.issues.length}</b>이슈</span><span><b>{member.pullRequests.length}</b>PR</span><span><b>{member.merged}</b>머지</span><span><b>{member.reviewedPullRequests.length}</b>리뷰</span></div></button>)}</div>
+        <div className="sectionHead"><h2>멤버별 기여</h2><p>카드에서 PR 사이즈별 생성 횟수를 비교하고, 선택하면 상세 활동을 볼 수 있습니다.</p></div>
+        <div className="memberGrid">{memberStats.map((member) => <button className="memberCard" key={member.githubId} onClick={() => setMemberId(member.githubId)}>
+          <div className="memberTop"><img src={`https://github.com/${member.githubId}.png?size=96`} alt="" /><span><b>{member.name}{member.approver && <i className="roleBadge">Approver</i>}</b><small>@{member.githubId}</small></span><strong>{member.total}</strong></div>
+          <div className="miniStats"><span><b>{member.issues.length}</b>이슈</span><span><b>{member.pullRequests.length}</b>PR</span><span><b>{member.merged}</b>머지</span><span><b>{member.reviewedPullRequests.length}</b>리뷰</span></div>
+          <div className="memberSizeStats" aria-label={`${member.name} PR 사이즈별 생성 횟수`}>
+            <small>PR 사이즈별 기여</small>
+            <div>{prSizeOrder.map((size) => <span className={member.sizes[size] ? "" : "empty"} key={size}><b>{size}</b><strong>{member.sizes[size]}</strong></span>)}</div>
+          </div>
+        </button>)}</div>
         <div className="sectionHead approverSectionHead"><h2>Approver 활동</h2><p>실제 GitHub Review와 <code>/approve</code> 승인 PR을 집계합니다.</p></div>
         <div className="memberGrid approverGrid">{filteredApprovers.map((approver) => {
           const activityPulls = new Set([...approver.reviewedPullRequests, ...approver.approvedPullRequests].map((item) => item.number)).size;
@@ -762,7 +778,7 @@ export default function Dashboard() {
         ...selectedApprover.approvedPullRequests.map((item) => ({ ...item, kind: "승인", activityAt: item.approvedAt || item.updatedAt, detail: "/approve" })),
       ].sort((a, b) => b.activityAt.localeCompare(a.activityAt)).slice(0, 30).map((item, index) => <a href={item.url} target="_blank" rel="noreferrer" key={`${item.kind}-${item.number}-${index}`}><span>{item.kind}</span><div><b>#{item.number} {item.title}</b><small>{dateFmt.format(new Date(item.activityAt))} · {item.detail}</small></div></a>)}</div></aside></div>}
 
-      {selectedMember && <div className="drawerBackdrop"><button className="drawerDismiss" onClick={() => setMemberId(null)} aria-label="멤버 상세 닫기" /><aside className="memberDrawer" role="dialog" aria-modal="true" aria-label={`${selectedMember.name} 상세 기여`}><button className="closeButton" onClick={() => setMemberId(null)} aria-label="닫기">×</button><div className="drawerProfile"><img src={`https://github.com/${selectedMember.githubId}.png?size=128`} alt="" /><div><h2>{selectedMember.name}{selectedMember.approver && <i className="roleBadge">Approver</i>}</h2><a href={`https://github.com/${selectedMember.githubId}`} target="_blank" rel="noreferrer">@{selectedMember.githubId} ↗</a></div></div><div className="drawerStats"><span><strong>{selectedMember.issues.length}</strong>이슈</span><span><strong>{selectedMember.pullRequests.length}</strong>PR</span><span><strong>{selectedMember.merged}</strong>머지</span><span><strong>{selectedMember.reviewedPullRequests.length}</strong>리뷰</span></div><h3>최근 활동</h3><div className="drawerActivities">{[
+      {selectedMember && <div className="drawerBackdrop"><button className="drawerDismiss" onClick={() => setMemberId(null)} aria-label="멤버 상세 닫기" /><aside className="memberDrawer" role="dialog" aria-modal="true" aria-label={`${selectedMember.name} 상세 기여`}><button className="closeButton" onClick={() => setMemberId(null)} aria-label="닫기">×</button><div className="drawerProfile"><img src={`https://github.com/${selectedMember.githubId}.png?size=128`} alt="" /><div><h2>{selectedMember.name}{selectedMember.approver && <i className="roleBadge">Approver</i>}</h2><a href={`https://github.com/${selectedMember.githubId}`} target="_blank" rel="noreferrer">@{selectedMember.githubId} ↗</a></div></div><div className="drawerStats"><span><strong>{selectedMember.issues.length}</strong>이슈</span><span><strong>{selectedMember.pullRequests.length}</strong>PR</span><span><strong>{selectedMember.merged}</strong>머지</span><span><strong>{selectedMember.reviewedPullRequests.length}</strong>리뷰</span></div><h3>PR 사이즈별 기여</h3><div className="drawerSizeStats">{prSizeOrder.map((size) => <span className={selectedMember.sizes[size] ? "" : "empty"} key={size}><b>{size}</b><strong>{selectedMember.sizes[size]}</strong></span>)}</div><h3>최근 활동</h3><div className="drawerActivities">{[
         ...selectedMember.issues.map((item) => ({ ...item, kind: "이슈" })),
         ...selectedMember.pullRequests.map((item) => ({ ...item, kind: "PR" })),
         ...selectedMember.reviewedPullRequests.map((item) => ({ ...item, kind: "리뷰", createdAt: item.reviewedAt || item.updatedAt })),
