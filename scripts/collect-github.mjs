@@ -129,7 +129,9 @@ async function github(path, { search = false, attempt = 0 } = {}) {
   // The search API allows only 30 requests/minute even when authenticated.
   // The member/approver scan has more than 30 independent queries, so smooth
   // every query rather than triggering a secondary-rate-limit failure.
-  if (search) await sleep(TOKEN ? 2_100 : 6_500);
+  // Keep authenticated requests below the stricter secondary-search limit as
+  // well (roughly 19/minute), not merely the documented primary 30/minute.
+  if (search) await sleep(TOKEN ? 3_100 : 6_500);
   return data;
 }
 
