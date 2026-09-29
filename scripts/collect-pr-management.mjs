@@ -15,6 +15,11 @@ const errors = [];
 let discoveryComplete = false;
 let rateLimited = false;
 const checkedAt = new Date().toISOString();
+// A full scan is only needed once. On later runs, scan PRs created since the
+// previous successful discovery (with a short overlap for clock/schedule lag),
+// then refresh the already tracked Korean PRs separately below.
+const previousDiscoveryAt = previous?.discoveryCursorAt || previous?.lastSuccessfulAt || previous?.generatedAt || config.trackingStart;
+const discoveryCutoff = new Date(Math.max(Date.parse(config.trackingStart), Date.parse(previousDiscoveryAt) - 5 * 60 * 1000)).toISOString();
 // Fetch in memory before any output. Failure must never publish an empty replacement.
 const assignmentData = await loadPrivateAssignments();
 if (previous?.assignmentSource?.status === "connected" && assignmentData.assignmentSource.status !== "connected") {
@@ -59,11 +64,13 @@ function minimal(pr) {
 }
 
 // Inspect every new PR's files, including PRs without a language label or [ko] title.
-// Listing all states also catches PRs merged between scheduled runs.
+// Listing all states also catches PRs merged between scheduled runs. A full open
+// backlog scan is strictly a first-run bootstrap; repeating it hourly walks the
+// entire upstream repository and exhausts the GitHub API budget.
 try {
-  const since = new Date(config.trackingStart).toISOString();
-  const candidates = await discover("all", since);
-  if (config.includeOpenBacklog) candidates.push(...(await discover("open", null)).filter((pr) => pr.labels.some((label) => label.name === "language/ko") || /^\[ko\]/i.test(pr.title)));
+  const candidates = await discover("all", discoveryCutoff);
+  const needsOpenBacklogBootstrap = config.includeOpenBacklog && !previous?.generatedAt && rows.size === 0;
+  if (needsOpenBacklogBootstrap) candidates.push(...(await discover("open", null)).filter((pr) => pr.labels.some((label) => label.name === "language/ko") || /^\[ko\]/i.test(pr.title)));
   for (const candidate of candidates) if (!rows.has(candidate.number)) rows.set(candidate.number, minimal(candidate));
   for (const key of Object.keys(assignmentData.assignments)) {
     const number = Number(key);
@@ -102,7 +109,7 @@ for (const [number, previousPr] of rows) {
 }
 
 validateAssignmentAuthors(assignmentData.assignments, [...rows.values()]);
-const snapshot = { version: 1, repository: config.repository, trackingStart: config.trackingStart, includeOpenBacklog: Boolean(config.includeOpenBacklog), ...assignmentData, generatedAt: checkedAt, lastSuccessfulAt: errors.length ? previous?.lastSuccessfulAt || null : checkedAt, discoveryComplete, errors, pullRequests: [...rows.values()].sort((a, b) => b.number - a.number) };
+const snapshot = { version: 1, repository: config.repository, trackingStart: config.trackingStart, includeOpenBacklog: Boolean(config.includeOpenBacklog), ...assignmentData, generatedAt: checkedAt, lastSuccessfulAt: errors.length ? previous?.lastSuccessfulAt || null : checkedAt, discoveryComplete, discoveryCursorAt: discoveryComplete ? checkedAt : previous?.discoveryCursorAt || null, errors, pullRequests: [...rows.values()].sort((a, b) => b.number - a.number) };
 await mkdir(dirname(output), { recursive: true });
 await writeFile(`${output}.tmp`, JSON.stringify(snapshot, null, 2) + "\n");
 await rename(`${output}.tmp`, output);
@@ -111,4 +118,10 @@ if (!process.env.PR_MANAGEMENT_OUTPUT) {
   await writeFile("public/data/pr-management.json", JSON.stringify(snapshot, null, 2) + "\n");
 }
 console.log(`PR ${rows.size}건 보존 · ${errors.length ? `오류 ${errors.length}건 (기존 데이터 유지)` : "수집 완료"}`);
-if (errors.length) { console.error(errors.join("\n")); process.exitCode = 1; }
+if (errors.length) {
+  console.warn(errors.join("\n"));
+  // A single PR can be temporarily unavailable or rate-limited. The snapshot
+  // keeps its previous value and exposes the sync error, so deploy it instead
+  // of turning a recoverable partial update into an endless failed workflow.
+  if (!discoveryComplete) process.exitCode = 1;
+}

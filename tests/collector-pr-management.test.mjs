@@ -76,7 +76,7 @@ test("한국어 변경이 없고 후보 라벨도 없는 신규 PR은 제외한�
 test("API 장애가 발생해도 기존 PR과 마지막 성공 수집 시각을 보존한다", async () => {
   const previous = { lastSuccessfulAt: "2026-09-11T01:00:00Z", pullRequests: [{ number: 99, title: "Existing PR", state: "open", checkedAt: "2026-09-11T01:00:00Z" }] };
   const { exitCode, data } = await runFixture("failure", previous);
-  assert.equal(exitCode, 1);
+  assert.equal(exitCode, 0);
   assert.equal(data.pullRequests[0].number, 99);
   assert.equal(data.pullRequests[0].title, "Existing PR");
   assert.match(data.pullRequests[0].syncError, /503/);

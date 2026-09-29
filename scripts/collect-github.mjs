@@ -126,7 +126,10 @@ async function github(path, { search = false, attempt = 0 } = {}) {
   }
 
   const data = await response.json();
-  if (search && !TOKEN) await sleep(6_500);
+  // The search API allows only 30 requests/minute even when authenticated.
+  // The member/approver scan has more than 30 independent queries, so smooth
+  // every query rather than triggering a secondary-rate-limit failure.
+  if (search) await sleep(TOKEN ? 2_100 : 6_500);
   return data;
 }
 
